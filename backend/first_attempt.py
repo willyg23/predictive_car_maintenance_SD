@@ -1,21 +1,36 @@
 from flask import Flask, jsonify, request
 from constants import CAR_ASSISTANT_MODEL_ID
-import openai, os
+import os
 from dotenv import load_dotenv
 load_dotenv()
-openai.api_key = os.getenv('openai_api_key')
+
+from openai import OpenAI
+
+
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY"),
+)
+
 
 
 app = Flask(__name__)
 
-def generate_gpt_response(prompt, model):
-    response = openai.ChatCompletion.create(
-        model=model,  # here we specify the model. could be generic like "gpt-4o", or the ID of a fine-tuned model, like the car assitant
-        messages=[
-            {"role": "user", "content": prompt}  # using the user's prompt
+def generate_gpt_response(prompt, model = CAR_ASSISTANT_MODEL_ID):
+
+    GPT_MODEL = "gpt-4-1106-preview" #"gpt-3.5-turbo-1106"
+    messages = [
+            {"role": "system", "content": 'You answer question about Web  services.'
+            },
+            {"role": "user", "content": prompt},
         ]
-    )
-    return response['choices'][0]['message']['content']
+    response = client.chat.completions.create(
+            model="gpt-4",
+            messages=messages,
+            temperature=0
+        )
+    response_message = response.choices[0].message.content
+    print(response_message)
+    return response_message
 
 @app.route('/generate-gpt-response', methods=['POST'])
 def return_generated_response():
