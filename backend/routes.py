@@ -31,5 +31,14 @@ def return_generated_response():
     response_text = generate_gpt_response(data.get('prompt'), data.get('model'))
     return jsonify({"response": response_text})
 
+@app.route("/")
+def hello_world():
+    return "<p>default route</p>"
+
+
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+    
