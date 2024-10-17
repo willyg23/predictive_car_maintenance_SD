@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Senior_Design_Collection",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
