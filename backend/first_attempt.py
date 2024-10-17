@@ -15,16 +15,15 @@ client = OpenAI(
 
 app = Flask(__name__)
 
-def generate_gpt_response(prompt, model = CAR_ASSISTANT_MODEL_ID):
+def generate_gpt_response(prompt, model):
 
-    GPT_MODEL = "gpt-4-1106-preview" #"gpt-3.5-turbo-1106"
     messages = [
             {"role": "system", "content": 'You answer question about Web  services.'
             },
             {"role": "user", "content": prompt},
         ]
     response = client.chat.completions.create(
-            model="gpt-4",
+            model=model,
             messages=messages,
             temperature=0
         )
@@ -37,7 +36,9 @@ def return_generated_response():
     # here i assume that the frontend will make a POST request to this route 
     data = request.json
     
-    response_text = generate_gpt_response(data.get('prompt'), CAR_ASSISTANT_MODEL_ID)
+    response_text = generate_gpt_response(data.get('prompt'), data.get('model'))
+    # request from the frontend will specify the model type, so that way if we ever want to query multiple models
+    # we don't have to make a function or var for each different model
     
     return jsonify({"response": response_text})
 
