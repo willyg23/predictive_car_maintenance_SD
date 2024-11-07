@@ -6,7 +6,7 @@ const GettingStarted = () => {
         <View style={styles.container} >
 
             <View style={styles.pictureContainer}>
-                {/* <Image source={require("../../assets/gettingStarted.png")} style={styles.image}/>  */}
+                <Image source={require("../../assets/gettingStarted.png")} style={styles.image}/> 
             </View>
             
 
@@ -35,7 +35,7 @@ const GettingStarted = () => {
 }
 const styles = StyleSheet.create({
     container: {
-        height:500,
+        height:650,
         backgroundColor:"white",
     },
     stringContainer:{
@@ -58,8 +58,7 @@ const styles = StyleSheet.create({
         margin:"auto",
     },
     buttonContainer:{
-        borderWidth:3,
-        borderColor:"black",
+        
         marginTop:70
     },
     button: {
