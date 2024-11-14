@@ -19,6 +19,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Login from './screens/login';
+import { Sign } from 'crypto';
+import SignIn from './screens/siginIn';
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +35,8 @@ function App(): React.JSX.Element {
           <Stack.Navigator>
         
             <Stack.Screen name='GettingStarted' component={GettingStarted}/>
+            <Stack.Screen name='Login' component={Login}/>
+            <Stack.Screen name='SignIn' component={SignIn}/>
             
           </Stack.Navigator>
         
