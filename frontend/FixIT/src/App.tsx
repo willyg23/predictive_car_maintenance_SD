@@ -10,7 +10,6 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import GettingStarted from './screens/GettingStarted';
 import {
-
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -19,9 +18,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import Login from './screens/login';
-import { Sign } from 'crypto';
-import SignIn from './screens/siginIn';
+import Login from './screens/Login';
+import SignIn from './screens/SiginIn';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,17 +27,13 @@ function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{ flex: 1 }}>
         <NavigationContainer>
-          
           <Stack.Navigator>
-        
             <Stack.Screen name='GettingStarted' component={GettingStarted}/>
-            <Stack.Screen name='Login' component={Login}/>
-            <Stack.Screen name='SignIn' component={SignIn}/>
-            
+            {/* <Stack.Screen name='Login' component={Login}/>
+            <Stack.Screen name='SignIn' component={SignIn}/> */}
           </Stack.Navigator>
-        
       </NavigationContainer>
     </SafeAreaView>
     

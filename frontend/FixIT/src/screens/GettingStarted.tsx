@@ -1,8 +1,13 @@
 import { Button, Image, Pressable, StyleSheet, Text, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 
 const GettingStarted = () => {
+    console.log("test")
     return(
+        <SafeAreaView>
+
+        
         <View style={styles.container} >
 
             <View style={styles.pictureContainer}>
@@ -31,12 +36,14 @@ const GettingStarted = () => {
             </View>
 
         </View>
+        </SafeAreaView>
     )
 }
 const styles = StyleSheet.create({
     container: {
-        height:650,
+        
         backgroundColor:"white",
+        
     },
     stringContainer:{
         width:"75%",
