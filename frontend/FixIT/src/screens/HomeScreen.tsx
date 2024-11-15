@@ -38,11 +38,35 @@ const HomeScreen = () => {
                 </View>
                 <View style={styles.box}>
 
+                    <View style={styles.centerIconContainer}>
+                        <View style={styles.centerIcon}>
+                            <Image style={styles.icon} source={require("../../assets/thermometer-simple.png")}/>
+                        </View>
+                    </View>
+
+                    <View style={styles.textContainer}>
+                        <Text style={styles.boxTitle}>Battery</Text>
+                    </View>
+
+                    <View style={styles.valueContainer}>
+                        <Text style={styles.boxValue}>12.6V</Text>
+                    </View>
+                   
                 </View>
             </View>
 
             <View style={styles.rectangleBox}>
 
+                <View style={styles.stringContainer}>
+                    <View style={{margin:"auto"}}>
+                        <Text style={styles.header2Text}> Vehicle Status</Text>
+                        <Text style={styles.substring}>All systems operational</Text>
+                    </View>
+                </View>
+
+                <View>
+                    <Text></Text>
+                </View>
             </View>
 
             <View style={styles.DoublerectangleBoxContainer}>
@@ -103,7 +127,8 @@ const styles = StyleSheet.create({
         borderRadius:10,
         margin:"auto",
         marginTop:30,
-        backgroundColor:"white"
+        backgroundColor:"white",
+        flexDirection: "row",
     },
     DoublerectangleBoxContainer:{
         marginTop:30,
@@ -143,6 +168,22 @@ const styles = StyleSheet.create({
         fontSize:20,
         textAlign:"center",
         fontWeight:"800"
+    },
+    header2Text:{
+        fontSize:25,
+        fontWeight:600,
+        
+    },
+    stringContainer:{
+        borderWidth:1,
+        borderColor:"black",
+        
+        
+    },
+    substring:{
+        fontSize:15,
+        fontWeight:300,
+        textAlign:"center"
     }
 
 
