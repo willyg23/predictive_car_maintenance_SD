@@ -21,6 +21,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import Login from './screens/Login';
 import SignIn from './screens/SiginIn';
 import CarData from './screens/CarData';
+import HomeScreen from './screens/HomeScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +34,7 @@ function App(): React.JSX.Element {
           <Stack.Navigator>
             <Stack.Screen name='GettingStarted' component={GettingStarted}/>
             <Stack.Screen name='CarData' component={CarData}/>
+            <Stack.Screen name='HomeScreen' component={HomeScreen} options={{headerShown:false}}/>
             {/* <Stack.Screen name='Login' component={Login}/>
             <Stack.Screen name='SignIn' component={SignIn}/> */}
           </Stack.Navigator>

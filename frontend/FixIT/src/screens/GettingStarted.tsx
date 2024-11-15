@@ -27,7 +27,7 @@ const GettingStarted = ({ navigation }) => {
             {/* Getting started Button  */}
             <View style={styles.buttonContainer}>
 
-                <Pressable style={styles.button}  onPress={() => navigation.navigate('CarData')}>
+                <Pressable style={styles.button}  onPress={() => navigation.navigate('HomeScreen')}>
                     <Text style={styles.buttonString}>Get Started</Text>
                 </Pressable>
             </View>
@@ -43,9 +43,8 @@ const GettingStarted = ({ navigation }) => {
 }
 const styles = StyleSheet.create({
     container: {
-        
+        height:500,
         backgroundColor:"white",
-        
     },
     stringContainer:{
         width:"75%",
