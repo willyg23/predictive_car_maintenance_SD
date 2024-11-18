@@ -1,10 +1,22 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useEffect, useState } from 'react';
-
+import useBLE from "../../scripts/useBLE";
 
 const HomeScreen = () => {
     const [deviceConnected, setDeviceConnected] = useState(false);
-    
+
+    // The value below are all functions and variables needed for device to be connected
+    const {
+        scanForPeripherals,
+        connectToDevice,
+        disconnectFromDevice,
+        allDevices,
+        connectedDevice,
+        obdData,
+      } = useBLE();
+
+
+
     return(
         <View style={styles.container}>
 
@@ -134,29 +146,48 @@ const HomeScreen = () => {
             </View>
 
 
-            { deviceConnected ? (
-                    <>
-                        
-                    </>
-                ) : (
-                    <>
-                        <View style={styles.scanNowContainer}>
-                            <View style={{margin:"auto"}}>
-                                <Pressable style={{flexDirection:'row'}}>
-                                    <Image style={{width:25,height:25}} source={require("../../assets/wifi.png")}/>
-                                    <Text style={{fontSize:20, margin:'auto', marginLeft:10, color:'white', fontWeight:"500"}}>Scan for Device</Text>
-                                </Pressable>
-                                
-                            </View>
-                
+
+            {connectedDevice ? (
+                <>
+                    <Text style={styles.dataText}>
+                    Connected to {connectedDevice.name}
+                    </Text>
+                    <View>
+                    <Text style={styles.dataTitleText}>DTC Data:</Text>
+                    {obdData.length > 0 ? (
+                        obdData.map((dtc, index) => (
+                        <Text key={index} style={styles.dataText}>
+                            {dtc}
+                        </Text>
+                        ))
+                    ) : (
+                        <Text style={styles.dataText}>No DTCs received.</Text>
+                    )}
+                    </View>
+                    <TouchableOpacity onPress={disconnectFromDevice} style={styles.ctaButton}>
+                    <Text style={styles.ctaButtonText}>Disconnect</Text>
+                    </TouchableOpacity>
+                </>
+            ) : (
+                <>
+                    <View style={styles.scanNowContainer}>
+                        <View style={{margin:"auto"}}>
+                            <Pressable style={{flexDirection:'row'}} onPress={scanForPeripherals}>
+                                <Image style={{width:25,height:25}} source={require("../../assets/wifi.png")}/>
+                                <Text style={{fontSize:20, margin:'auto', marginLeft:10, color:'white', fontWeight:"500"}}>Scan for Device</Text>
+                            </Pressable>
                         </View>
-                    </>
-                )
-            }
-                
-            
-            
-            
+                    </View>
+                    {allDevices.map((device, index) => (
+                    <TouchableOpacity
+                        key={index}
+                        onPress={() => connectToDevice(device)}
+                        style={styles.ctaButton}>
+                        <Text style={styles.ctaButtonText}>Connect to {device.name}</Text>
+                    </TouchableOpacity>
+                    ))}
+                </>
+            )}
         </View>
     )
 }
@@ -276,8 +307,37 @@ const styles = StyleSheet.create({
         backgroundColor:"#3C82F6",
         borderRadius:10,
         flexDirection:'row'
-    }
+    },
 
+    // Bens CSS below 
+    dataTitleWrapper: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      dataTitleText: {
+        fontSize: 30,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginHorizontal: 20,
+        color: 'black',
+      },
+      dataText: {
+        fontSize: 20,
+        marginTop: 10,
+        color: 'black',
+      },
+      ctaButton: {
+        backgroundColor: 'blue',
+        padding: 10,
+        margin: 10,
+        borderRadius: 5,
+      },
+      ctaButtonText: {
+        color: 'white',
+        fontSize: 18,
+      },
+    //Ben's CSS ends
 
 })
 
