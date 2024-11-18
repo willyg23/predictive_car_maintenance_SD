@@ -3,6 +3,7 @@ import { Image, StyleSheet, Text, View } from "react-native";
 
 
 const HomeScreen = () => {
+    const [deviceConnected, setDeviceConnected] = usesate(false);
     return(
         <View style={styles.container}>
 
@@ -40,7 +41,7 @@ const HomeScreen = () => {
 
                     <View style={styles.centerIconContainer}>
                         <View style={styles.centerIcon}>
-                            <Image style={styles.icon} source={require("../../assets/thermometer-simple.png")}/>
+                            <Image style={styles.icon} source={require("../../assets/battery.png")}/>
                         </View>
                     </View>
 
@@ -58,23 +59,30 @@ const HomeScreen = () => {
             <View style={styles.rectangleBox}>
 
                 <View style={styles.stringContainer}>
-                    <View style={{margin:"auto"}}>
+                    <View style={{margin:"auto", marginLeft:12}}>
                         <Text style={styles.header2Text}> Vehicle Status</Text>
                         <Text style={styles.substring}>All systems operational</Text>
                     </View>
                 </View>
 
-                <View>
-                    <Text></Text>
+                <View style={{margin:'auto',marginLeft:"30%"}}>
+                    <Image style={{width:40,height:40}} source={require("../../assets/warning.png")}/>
                 </View>
             </View>
 
             <View style={styles.DoublerectangleBoxContainer}>
                 <View style={styles.rectangle}>
-
+                    <View style={styles.iconStringContainer}>
+                        <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/pulse.png")}/>
+                        <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Live Data</Text>
+                    </View>
+                    
                 </View>
                 <View style={styles.rectangle}>
-
+                    <View style={styles.iconStringContainer}>
+                        <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/wrench.png")}/>
+                        <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Diagnostics</Text>
+                    </View>
                 </View>
             </View>
             
@@ -92,7 +100,7 @@ const styles = StyleSheet.create({
     },
     headerContainer:{
         
-        backgroundColor:"#000000",
+        backgroundColor:"#18181b",
         height:100,
         
     },
@@ -111,7 +119,7 @@ const styles = StyleSheet.create({
         marginTop:25,
     },
     box:{
-        borderColor:"grey",
+        borderColor:"#E4E4E7",
         borderWidth:1,
         width:"40%",
         height:160,
@@ -120,7 +128,7 @@ const styles = StyleSheet.create({
         backgroundColor:"white"
     },
     rectangleBox:{
-        borderColor:"grey",
+        borderColor:"#E4E4E7",
         borderWidth:1,
         width:"89%",
         height:80,
@@ -136,7 +144,7 @@ const styles = StyleSheet.create({
     },
     rectangle:{
         
-        backgroundColor:"black",
+        backgroundColor:"#18181b",
         height:80,
         width:"40%",
         margin:"auto",
@@ -175,8 +183,8 @@ const styles = StyleSheet.create({
         
     },
     stringContainer:{
-        borderWidth:1,
-        borderColor:"black",
+        // borderWidth:1,
+        // borderColor:"black",
         
         
     },
@@ -184,6 +192,12 @@ const styles = StyleSheet.create({
         fontSize:15,
         fontWeight:300,
         textAlign:"center"
+    },
+    iconStringContainer:{
+        // borderWidth:1,
+        // borderColor:'white',
+        margin:"auto",
+        flexDirection:"row"
     }
 
 
