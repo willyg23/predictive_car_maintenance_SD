@@ -1,9 +1,10 @@
-import { Image, StyleSheet, Text, View } from "react-native";
-
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from 'react';
 
 
 const HomeScreen = () => {
-    const [deviceConnected, setDeviceConnected] = usesate(false);
+    const [deviceConnected, setDeviceConnected] = useState(false);
+    
     return(
         <View style={styles.container}>
 
@@ -14,7 +15,16 @@ const HomeScreen = () => {
                     </View> 
 
                     <View>
-                        <Text style={styles.string}>Connected: Honda Civic 2022</Text>
+                        { deviceConnected ? (
+                            <>
+                                <Text style={styles.string}>Connected: Honda Civic 2022</Text>
+                            </>
+                        ) : (
+                            <>
+                                <Text style={styles.string}>Unconnected: Connect device</Text>
+                            </>
+                        )
+                        }
                     </View>
                 </View>
             </View>
@@ -32,7 +42,16 @@ const HomeScreen = () => {
                     </View>
 
                     <View style={styles.valueContainer}>
-                        <Text style={styles.boxValue}>194°F</Text>
+                        { deviceConnected ? (
+                                <>
+                                    <Text style={styles.boxValue}>194°F</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Text style={styles.boxValue}>--</Text>
+                                </>
+                            )
+                        }
                     </View>
                    
                         
@@ -50,7 +69,16 @@ const HomeScreen = () => {
                     </View>
 
                     <View style={styles.valueContainer}>
-                        <Text style={styles.boxValue}>12.6V</Text>
+                        { deviceConnected ? (
+                                <>
+                                    <Text style={styles.boxValue}>12.6V</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Text style={styles.boxValue}>--</Text>
+                                </>
+                            )
+                        }
                     </View>
                    
                 </View>
@@ -73,18 +101,60 @@ const HomeScreen = () => {
             <View style={styles.DoublerectangleBoxContainer}>
                 <View style={styles.rectangle}>
                     <View style={styles.iconStringContainer}>
-                        <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/pulse.png")}/>
-                        <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Live Data</Text>
+                        { deviceConnected ? (
+                                <>
+                                    <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/pulse.png")}/>
+                                    <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Live Data</Text>
+                                </>
+                            ) : (
+                                <>
+                                <Text style={{color:"white", fontSize:40}}>--</Text>
+                                </>
+                            )
+                        }
+                        
                     </View>
                     
                 </View>
                 <View style={styles.rectangle}>
                     <View style={styles.iconStringContainer}>
-                        <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/wrench.png")}/>
-                        <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Diagnostics</Text>
+                    { deviceConnected ? (
+                        <>
+                            <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/wrench.png")}/>
+                            <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Diagnostics</Text>
+                        </>
+                        ) : (
+                            <>
+                                <Text style={{color:"white", fontSize:40}}>--</Text>
+                            </>
+                        )
+                    }
                     </View>
                 </View>
             </View>
+
+
+            { deviceConnected ? (
+                    <>
+                        
+                    </>
+                ) : (
+                    <>
+                        <View style={styles.scanNowContainer}>
+                            <View style={{margin:"auto"}}>
+                                <Pressable style={{flexDirection:'row'}}>
+                                    <Image style={{width:25,height:25}} source={require("../../assets/wifi.png")}/>
+                                    <Text style={{fontSize:20, margin:'auto', marginLeft:10, color:'white', fontWeight:"500"}}>Scan for Device</Text>
+                                </Pressable>
+                                
+                            </View>
+                
+                        </View>
+                    </>
+                )
+            }
+                
+            
             
             
         </View>
@@ -185,8 +255,6 @@ const styles = StyleSheet.create({
     stringContainer:{
         // borderWidth:1,
         // borderColor:"black",
-        
-        
     },
     substring:{
         fontSize:15,
@@ -198,6 +266,16 @@ const styles = StyleSheet.create({
         // borderColor:'white',
         margin:"auto",
         flexDirection:"row"
+    },
+    scanNowContainer:{
+        
+        margin:'auto',
+        marginTop:30,
+        width:"89%",
+        height:50,
+        backgroundColor:"#3C82F6",
+        borderRadius:10,
+        flexDirection:'row'
     }
 
 
