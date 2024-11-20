@@ -9,8 +9,8 @@ terraform {
     terraform will create the object with this key path when it saves state. the full path will be: s3://senior-design-terraform-state/dev/terraform.tfstate
     but we don't need to repeat senior-design-terraform-state in the key, since that's already part of the bucket name.
     */
-    key = "dev/terraform.tfstate"
-    region = "us-east-2"
+    key            = "dev/terraform.tfstate"
+    region         = "us-east-2"
     dynamodb_table = "senior-design-terraform-state-lock"
   }
 }
