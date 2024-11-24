@@ -51,10 +51,10 @@ resource "aws_iam_role" "terraform_state_role" {
       {
         Effect = "Allow"
         Principal = {
-        AWS = [
+          AWS = [
             # here is where you add developers to have access to this role
             "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/willyg"
-        ]
+          ]
         }
         Action = "sts:AssumeRole"
       }
