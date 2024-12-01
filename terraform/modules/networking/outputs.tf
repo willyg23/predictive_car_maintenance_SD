@@ -47,3 +47,18 @@ output "private_subnet_cidrs" {
   description = "CIDR blocks of private subnets"
   value       = var.private_subnet_cidrs
 }
+
+output "alb_security_group_id" {
+  description = "ALB security group id"
+  value       = module.security_groups.alb_security_group_id
+}
+
+output "ecs_security_group_id" {
+  description = "ECS security group id"
+  value       = module.security_groups.ecs_security_group_id
+}
+
+output "rds_security_group_id" {
+  description = "RDS security group id"
+  value       = module.security_groups.rds_security_group_id
+}
