@@ -83,3 +83,10 @@ resource "aws_route_table_association" "private_route_table_association" {
   subnet_id      = element(aws_subnet.private_subnets[*].id, count.index)
   route_table_id = aws_route_table.private_route_table.id
 }
+
+module "security_groups" {
+  source      = "./security_groups"
+  environment = var.environment
+  vpc_main_id = aws_vpc.vpc_main.id
+  vpc_cidr    = var.vpc_cidr
+}
