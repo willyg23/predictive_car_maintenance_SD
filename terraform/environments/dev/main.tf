@@ -8,6 +8,11 @@ module "networking" {
   environment = "dev"
 }
 
+module "monitoring" {
+  source      = "../../modules/monitoring/cloudwatch"
+  environment = "dev"
+}
+
 module "auth" {
   source       = "../../modules/auth"
   environment  = "dev"
