@@ -90,3 +90,14 @@ module "security_groups" {
   vpc_main_id = aws_vpc.vpc_main.id
   vpc_cidr    = var.vpc_cidr
 }
+
+resource "aws_db_subnet_group" "rds_subnet_group" {
+  name        = "${var.environment}_rds_subnet_group"
+  description = "RDS subnet group that points to our private subnets"
+  subnet_ids  = aws_subnet.private_subnets[*].id
+
+  tags = {
+    Name        = "${var.environment}_rds_subnet_group"
+    Environment = var.environment
+  }
+}
