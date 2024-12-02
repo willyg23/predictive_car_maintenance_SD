@@ -62,3 +62,8 @@ output "rds_security_group_id" {
   description = "RDS security group id"
   value       = module.security_groups.rds_security_group_id
 }
+
+output "rds_subnet_group_name" {
+  description = "Name of the RDS subnet group"
+  value       = aws_db_subnet_group.rds_subnet_group.name
+}
