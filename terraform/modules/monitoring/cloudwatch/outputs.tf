@@ -48,3 +48,52 @@ output "auto_scaling_log_group_arn" {
   value       = aws_cloudwatch_log_group.auto_scaling_group_logs.arn
 }
 
+output "lb_access_log_group_name" {
+  description = "Name of the Load Balancer access logs CloudWatch log group"
+  value       = aws_cloudwatch_log_group.load_balancer_access_logs.name
+}
+
+output "lb_access_log_group_arn" {
+  description = "ARN of the Load Balancer access logs CloudWatch log group"
+  value       = aws_cloudwatch_log_group.load_balancer_access_logs.arn
+}
+
+output "lb_error_log_group_name" {
+  description = "Name of the Load Balancer error logs CloudWatch log group"
+  value       = aws_cloudwatch_log_group.load_balancer_error_logs.name
+}
+
+output "lb_error_log_group_arn" {
+  description = "ARN of the Load Balancer error logs CloudWatch log group"
+  value       = aws_cloudwatch_log_group.load_balancer_error_logs.arn
+}
+
+output "vpc_flow_log_group_name" {
+  description = "Name of the VPC Flow Logs CloudWatch log group"
+  value       = aws_cloudwatch_log_group.vpc_flow_logs.name
+}
+
+output "vpc_flow_log_group_arn" {
+  description = "ARN of the VPC Flow Logs CloudWatch log group"
+  value       = aws_cloudwatch_log_group.vpc_flow_logs.arn
+}
+
+output "api_access_log_group_name" {
+  description = "Name of the API Gateway access logs CloudWatch log group"
+  value       = aws_cloudwatch_log_group.api_gateway_access_logs.name
+}
+
+output "api_access_log_group_arn" {
+  description = "ARN of the API Gateway access logs CloudWatch log group"
+  value       = aws_cloudwatch_log_group.api_gateway_access_logs.arn
+}
+
+output "api_execution_log_group_name" {
+  description = "Name of the API Gateway execution logs CloudWatch log group"
+  value       = aws_cloudwatch_log_group.api_gateway_execution_logs.name
+}
+
+output "api_execution_log_group_arn" {
+  description = "ARN of the API Gateway execution logs CloudWatch log group"
+  value       = aws_cloudwatch_log_group.api_gateway_execution_logs.arn
+}

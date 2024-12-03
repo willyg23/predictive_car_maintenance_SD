@@ -32,3 +32,21 @@ variable "auto_scaling_group_log_prefix" {
   type        = string
   default     = "/aws/asg"
 }
+
+variable "load_balancer_log_prefix" {
+  description = "Prefix for Load Balancer related CloudWatch log groups"
+  type        = string
+  default     = "/aws/lb"
+}
+
+variable "vpc_log_prefix" {
+  description = "Prefix for VPC Flow Logs CloudWatch log groups"
+  type        = string
+  default     = "/aws/vpc"
+}
+
+variable "api_log_prefix" {
+  description = "Prefix for API Gateway log groups"
+  type        = string
+  default     = "/aws/api"
+}
