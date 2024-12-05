@@ -3,8 +3,6 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 
 const GettingStarted = ({ navigation }) => {
-    console.log("test")
-
 
     return(
         <SafeAreaView>
@@ -43,7 +41,7 @@ const GettingStarted = ({ navigation }) => {
 }
 const styles = StyleSheet.create({
     container: {
-        height:500,
+        height:600,
         backgroundColor:"white",
     },
     stringContainer:{

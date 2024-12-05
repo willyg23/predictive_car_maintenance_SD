@@ -45,14 +45,8 @@ const CarData = () => {
                 <TouchableOpacity onPress={scanForPeripherals} style={styles.ctaButton}>
                   <Text style={styles.ctaButtonText}>Scan for Devices</Text>
                 </TouchableOpacity>
-                {allDevices.map((device, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => connectToDevice(device)}
-                    style={styles.ctaButton}>
-                    <Text style={styles.ctaButtonText}>Connect to {device.name}</Text>
-                  </TouchableOpacity>
-                ))}
+                
+               
               </>
             )}
           </View>

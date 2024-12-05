@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
+import { Alert } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 
 const ESP32_SERVICE_UUID = '12345678-1234-1234-1234-123456789abc'; //  ESP32 Service UUID
@@ -8,10 +9,12 @@ const DTC_CHARACTERISTIC_UUID = '87654321-4321-4321-4321-cba987654321'; //  ESP3
 const bleManager = new BleManager();
 
 function useBLE() {
-  const [allDevices, setAllDevices] = useState<Device[]>([]);
+  const [allDevices, setAllDevices] = useState<Device[]>([
+
+  ]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [obdData, setObdData] = useState<string[]>([]);
-  const navigation = useNavigation();
+  
   
   const isDuplicateDevice = (devices: Device[], nextDevice: Device) => {
     return devices.findIndex(device => device.id === nextDevice.id) > -1;
@@ -24,7 +27,7 @@ function useBLE() {
         return;
       }
       if (device?.name) {
-        console.log('Found device:', device.name); // Log all discovered devices
+        // console.log('Found device:', device.name); // Log all discovered devices
       }
       if (device && device.name === 'ESP32-DTC') {
         if (!isDuplicateDevice(allDevices, device)) {
@@ -40,10 +43,10 @@ function useBLE() {
       const deviceConnection = await bleManager.connectToDevice(device.id);
       setConnectedDevice(deviceConnection);
       console.log(`Connected to ${device.name}`);
+      Alert.alert("Device Successfully Connected")
       await deviceConnection.discoverAllServicesAndCharacteristics();
       startReadingDTCFromESP32(deviceConnection);
       // Navigate after connection is established
-      
     } catch (error) {
       console.error('Failed to connect:', error);
     }
@@ -60,8 +63,8 @@ function useBLE() {
         }
         if (characteristic?.value) {
           const decodedData = atob(characteristic.value); // Decode Base64 if necessary
-          console.log('Received DTC Data:', decodedData);
-          setObdData(prev => [...prev, decodedData]); // Append DTC data
+          console.log('Received DTC Data: '+ decodedData + "\n");
+          setObdData(prev => [...prev, decodedData +"\n"]); // Append DTC data
         }
       },
     );

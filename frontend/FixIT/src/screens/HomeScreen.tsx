@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useEffect, useState } from 'react';
 import useBLE from "../../scripts/useBLE";
 import { useNavigation } from "@react-navigation/native";
@@ -16,7 +16,7 @@ const HomeScreen = () => {
         obdData,
       } = useBLE();
 
-
+      const navigation = useNavigation();
     return(
         <View style={styles.container}>
 
@@ -115,8 +115,17 @@ const HomeScreen = () => {
                     <View style={styles.iconStringContainer}>
                         { deviceConnected ? (
                                 <>
-                                    <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/pulse.png")}/>
-                                    <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Live Data</Text>
+                                    <Pressable onPress={() => navigation.navigate('LiveData', {
+                                        scanForPeripherals,
+                                        connectToDevice,
+                                        disconnectFromDevice,
+                                        allDevices,
+                                        connectedDevice,
+                                        obdData
+                                    })} style={{flexDirection:"row"}}>
+                                        <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/pulse.png")}/>
+                                        <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Live Data</Text>
+                                    </Pressable>
                                 </>
                             ) : (
                                 <>
@@ -132,8 +141,11 @@ const HomeScreen = () => {
                     <View style={styles.iconStringContainer}>
                     { deviceConnected ? (
                         <>
-                            <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/wrench.png")}/>
-                            <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Diagnostics</Text>
+                            <Pressable onPress={() => navigation.navigate('Diagnostics')} style={{flexDirection:"row"}}>
+                                <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/wrench.png")}/>
+                                <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Diagnostics</Text>
+                            </Pressable>
+                            
                         </>
                         ) : (
                             <>
@@ -147,12 +159,10 @@ const HomeScreen = () => {
 
 
 
-            {connectedDevice ? (
+            {deviceConnected ? (
                 <>
-                    <Text style={styles.dataText}>
-                    Connected to {connectedDevice.name}
-                    </Text>
-                    <View>
+                    
+                    {/* <View>
                     <Text style={styles.dataTitleText}>DTC Data:</Text>
                     {obdData.length > 0 ? (
                         obdData.map((dtc, index) => (
@@ -163,10 +173,15 @@ const HomeScreen = () => {
                     ) : (
                         <Text style={styles.dataText}>No DTCs received.</Text>
                     )}
+                    </View> */}
+                    <View style={styles.scanNowContainer}>
+                        <View style={{margin:"auto"}}>
+                            <Pressable style={{flexDirection:'row'}} onPress={ () => {disconnectFromDevice; setDeviceConnected(false)}}>
+                                <Image style={{width:25,height:25}} source={require("../../assets/wifi.png")}/>
+                                <Text style={{fontSize:20, margin:'auto', marginLeft:10, color:'white', fontWeight:"500"}}>Disconnect</Text>
+                            </Pressable>
+                        </View>
                     </View>
-                    <TouchableOpacity onPress={disconnectFromDevice} style={styles.ctaButton}>
-                    <Text style={styles.ctaButtonText}>Disconnect</Text>
-                    </TouchableOpacity>
                 </>
             ) : (
                 <>
@@ -178,14 +193,20 @@ const HomeScreen = () => {
                             </Pressable>
                         </View>
                     </View>
-                    {allDevices.map((device, index) => (
-                    <TouchableOpacity
-                        key={index}
-                        onPress={() => connectToDevice(device)}
-                        style={styles.ctaButton}>
-                        <Text style={styles.ctaButtonText}>Connect to {device.name}</Text>
-                    </TouchableOpacity>
-                    ))}
+                    <ScrollView style={styles.deviceScrollViewContainer}>
+                        {allDevices.map((device, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            onPress={async () => {
+                                await connectToDevice(device);
+                                setDeviceConnected(true);
+                            }}
+                            style={styles.ctaButton}>
+                            <Text style={styles.ctaButtonText}>Connect to {device.name}</Text>
+                        </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                    
                 </>
             )}
         </View>
@@ -338,6 +359,15 @@ const styles = StyleSheet.create({
         fontSize: 18,
       },
     //Ben's CSS ends
+    deviceScrollViewContainer:{
+        borderColor:"black",
+        borderWidth:1,
+        height:"20%",
+        width:"89%",
+        margin:"auto"
+
+    }
+    
 
 })
 

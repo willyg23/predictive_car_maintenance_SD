@@ -4,15 +4,15 @@ import { FlatList, ScrollView, Text, View } from "react-native"
 
 function Diagnostics() {
 const route = useRoute();
-const { deviceName, deviceId, obdData } = route.params;
+
 
 return (
   <View>
-    <Text>Device Name: {deviceName}</Text>
-    <Text>Device ID: {deviceId}</Text>
+    <Text>Device Name: </Text>
+    <Text>Device ID: </Text>
     <ScrollView>
         <Text>
-            {obdData}
+            
         </Text>
     </ScrollView>
   </View>

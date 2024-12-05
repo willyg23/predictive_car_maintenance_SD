@@ -18,11 +18,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import Login from './screens/Login';
-import SignIn from './screens/SiginIn';
+
 import CarData from './screens/CarData';
 import HomeScreen from './screens/HomeScreen';
 import Diagnostics from './screens/Diagnostics';
+import LiveData from './screens/LiveData';
 
 const Stack = createNativeStackNavigator();
 
@@ -37,8 +37,7 @@ function App(): React.JSX.Element {
             <Stack.Screen name='CarData' component={CarData}/>
             <Stack.Screen name='HomeScreen' component={HomeScreen} options={{headerShown:false}}/>
             <Stack.Screen name='Diagnostics' component={Diagnostics}/>
-            {/* <Stack.Screen name='Login' component={Login}/>
-            <Stack.Screen name='SignIn' component={SignIn}/> */}
+            <Stack.Screen name='LiveData' component={LiveData}/>
           </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaView>
