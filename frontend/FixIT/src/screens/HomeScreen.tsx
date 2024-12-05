@@ -45,7 +45,7 @@ const HomeScreen = () => {
                 <View style={styles.box}>
                     <View style={styles.centerIconContainer}>
                         <View style={styles.centerIcon}>
-                            <Image style={styles.icon} source={require("../../assets/thermometer-simple.png")}/>
+                            <Image style={styles.icon} source={require("../../assets/thermometer.png")}/>
                         </View>
                     </View>
 
@@ -122,7 +122,14 @@ const HomeScreen = () => {
                                         allDevices,
                                         connectedDevice,
                                         obdData
-                                    })} style={{flexDirection:"row"}}>
+                                    })} style={({ pressed }) => [
+                                        {
+                                          flexDirection: "row",
+                                          transform: [{ scale: pressed ? 0.95 : 1 }],
+                                          opacity: pressed ? 0.8 : 1,
+                                          transition: 'all 0.2s'
+                                        }
+                                      ]}>
                                         <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/pulse.png")}/>
                                         <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Live Data</Text>
                                     </Pressable>
@@ -141,7 +148,14 @@ const HomeScreen = () => {
                     <View style={styles.iconStringContainer}>
                     { deviceConnected ? (
                         <>
-                            <Pressable onPress={() => navigation.navigate('Diagnostics')} style={{flexDirection:"row"}}>
+                            <Pressable onPress={() => navigation.navigate('Diagnostics')} style={({ pressed }) => [
+                                        {
+                                          flexDirection: "row",
+                                          transform: [{ scale: pressed ? 0.95 : 1 }],
+                                          opacity: pressed ? 0.8 : 1,
+                                          transition: 'all 0.2s'
+                                        }
+                                      ]}>
                                 <Image style={{width:24,height:24,margin:'auto'}} source={require("../../assets/wrench.png")}/>
                                 <Text style={{marginLeft:5,color:"white", fontSize:20, fontWeight:"500"}}>Diagnostics</Text>
                             </Pressable>
@@ -176,7 +190,14 @@ const HomeScreen = () => {
                     </View> */}
                     <View style={styles.scanNowContainer}>
                         <View style={{margin:"auto"}}>
-                            <Pressable style={{flexDirection:'row'}} onPress={ () => {disconnectFromDevice; setDeviceConnected(false)}}>
+                            <Pressable onPress={ () => {disconnectFromDevice; setDeviceConnected(false)}} style={({ pressed }) => [
+                                        {
+                                          flexDirection: "row",
+                                          transform: [{ scale: pressed ? 0.95 : 1 }],
+                                          opacity: pressed ? 0.8 : 1,
+                                          transition: 'all 0.2s'
+                                        }
+                                      ]}>
                                 <Image style={{width:25,height:25}} source={require("../../assets/wifi.png")}/>
                                 <Text style={{fontSize:20, margin:'auto', marginLeft:10, color:'white', fontWeight:"500"}}>Disconnect</Text>
                             </Pressable>
@@ -187,7 +208,14 @@ const HomeScreen = () => {
                 <>
                     <View style={styles.scanNowContainer}>
                         <View style={{margin:"auto"}}>
-                            <Pressable style={{flexDirection:'row'}} onPress={scanForPeripherals}>
+                            <Pressable onPress={scanForPeripherals} style={({ pressed }) => [
+                                        {
+                                          flexDirection: "row",
+                                          transform: [{ scale: pressed ? 0.95 : 1 }],
+                                          opacity: pressed ? 0.8 : 1,
+                                          transition: 'all 0.2s'
+                                        }
+                                      ]}>
                                 <Image style={{width:25,height:25}} source={require("../../assets/wifi.png")}/>
                                 <Text style={{fontSize:20, margin:'auto', marginLeft:10, color:'white', fontWeight:"500"}}>Scan for Device</Text>
                             </Pressable>
