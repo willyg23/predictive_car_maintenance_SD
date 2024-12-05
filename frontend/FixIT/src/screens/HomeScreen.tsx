@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import useBLE from "../../scripts/useBLE";
 
 const HomeScreen = () => {
-    const [deviceConnected, setDeviceConnected] = useState(false);
+    const [deviceConnected, setDeviceConnected] = useState(true);
 
     // The value below are all functions and variables needed for device to be connected
     const {
