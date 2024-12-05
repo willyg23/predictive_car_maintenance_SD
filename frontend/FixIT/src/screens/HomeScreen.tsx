@@ -1,9 +1,10 @@
 import { Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useEffect, useState } from 'react';
 import useBLE from "../../scripts/useBLE";
+import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = () => {
-    const [deviceConnected, setDeviceConnected] = useState(true);
+    const [deviceConnected, setDeviceConnected] = useState(false);
 
     // The value below are all functions and variables needed for device to be connected
     const {
@@ -14,7 +15,6 @@ const HomeScreen = () => {
         connectedDevice,
         obdData,
       } = useBLE();
-
 
 
     return(

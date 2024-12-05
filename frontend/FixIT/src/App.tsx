@@ -22,6 +22,7 @@ import Login from './screens/Login';
 import SignIn from './screens/SiginIn';
 import CarData from './screens/CarData';
 import HomeScreen from './screens/HomeScreen';
+import Diagnostics from './screens/Diagnostics';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +36,7 @@ function App(): React.JSX.Element {
             <Stack.Screen name='GettingStarted' component={GettingStarted}/>
             <Stack.Screen name='CarData' component={CarData}/>
             <Stack.Screen name='HomeScreen' component={HomeScreen} options={{headerShown:false}}/>
+            <Stack.Screen name='Diagnostics' component={Diagnostics}/>
             {/* <Stack.Screen name='Login' component={Login}/>
             <Stack.Screen name='SignIn' component={SignIn}/> */}
           </Stack.Navigator>

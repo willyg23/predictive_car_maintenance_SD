@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import { BleManager, Device } from 'react-native-ble-plx';
 
@@ -10,7 +11,8 @@ function useBLE() {
   const [allDevices, setAllDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [obdData, setObdData] = useState<string[]>([]);
-
+  const navigation = useNavigation();
+  
   const isDuplicateDevice = (devices: Device[], nextDevice: Device) => {
     return devices.findIndex(device => device.id === nextDevice.id) > -1;
   };
@@ -40,6 +42,8 @@ function useBLE() {
       console.log(`Connected to ${device.name}`);
       await deviceConnection.discoverAllServicesAndCharacteristics();
       startReadingDTCFromESP32(deviceConnection);
+      // Navigate after connection is established
+      
     } catch (error) {
       console.error('Failed to connect:', error);
     }
