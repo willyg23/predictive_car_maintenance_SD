@@ -13,6 +13,12 @@ module "monitoring" {
   environment = "dev"
 }
 
+module "ecr" {
+  source          = "../../modules/ecr"
+  environment     = "dev"
+  repository_name = "dev_ecr"
+}
+
 module "auth" {
   source       = "../../modules/auth"
   environment  = "dev"
