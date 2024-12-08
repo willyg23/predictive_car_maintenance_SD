@@ -49,6 +49,7 @@ def health_check():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 80)))
+    #change port to 5000 for local development
 
     # host is letting the server accept traffic from anywhere. change later to only accept traffic from ALB
     # port is the port where the server both recieves and sends traffic on
