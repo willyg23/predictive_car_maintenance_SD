@@ -19,6 +19,16 @@ module "ecr" {
   repository_name = "dev_ecr"
 }
 
+module "load_balancer" {
+  source = "../../modules/load_balancer"
+
+  environment           = "dev"
+  vpc_id               = module.networking.vpc_main_id
+  public_subnet_ids    = module.networking.public_subnet_ids
+  alb_security_group_id = module.networking.alb_security_group_id 
+}
+
+
 module "auth" {
   source       = "../../modules/auth"
   environment  = "dev"
