@@ -23,10 +23,23 @@ module "load_balancer" {
   source = "../../modules/load_balancer"
 
   environment           = "dev"
-  vpc_id               = module.networking.vpc_main_id
-  public_subnet_ids    = module.networking.public_subnet_ids
-  alb_security_group_id = module.networking.alb_security_group_id 
+  vpc_id                = module.networking.vpc_main_id
+  public_subnet_ids     = module.networking.public_subnet_ids
+  alb_security_group_id = module.networking.alb_security_group_id
 }
+
+module "auto_scaling" {
+  source = "../../modules/auto_scaling"
+
+  environment           = "dev"
+  vpc_id                = module.networking.vpc_main_id
+  public_subnet_ids     = module.networking.public_subnet_ids
+  ecs_security_group_id = module.networking.ecs_security_group_id
+  target_group_arn      = module.load_balancer.target_group_arn
+  ecr_repository_url    = module.ecr.repository_url
+
+}
+
 
 
 module "auth" {
