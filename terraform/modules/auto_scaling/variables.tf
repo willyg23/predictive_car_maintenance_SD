@@ -19,6 +19,11 @@ variable "public_subnet_ids" {
 }
 
 variable "ecs_security_group_id" {
+  description = "Security group ID for ECS instances"
+  type        = string
+}
+
+variable "ec2_security_group_id" {
   description = "Security group ID for EC2 instances"
   type        = string
 }
@@ -81,5 +86,10 @@ variable "memory_utilization_low" {
 
 variable "ecr_repository_url" {
   description = "URL of the ECR repository containing the application image"
+  type        = string
+}
+
+variable "instance_profile_name" {
+  description = "Name of the EC2 instance profile"
   type        = string
 }

@@ -9,7 +9,6 @@ variable "vpc_cidr" {
 variable "environment" {
   description = "Environment (like prod, dev, or sandbox)"
   type        = string
-  # this does not have a default, as we specify the environment variable when we create the resource in the main.tf of the dev or prod folder
 }
 
 variable "azs" {
@@ -61,3 +60,4 @@ variable "dev_port" {
   type        = number
   default     = 3000
 }
+

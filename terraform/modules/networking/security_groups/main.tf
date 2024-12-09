@@ -1,4 +1,68 @@
-### ECS
+### EC2
+# Base security group for EC2
+resource "aws_security_group" "ec2_security_group" {
+  name        = "${var.environment}-ec2-security-group"
+  description = "Security group for EC2 instances"
+  vpc_id      = var.vpc_main_id
+
+  tags = {
+    Name        = "${var.environment}-ec2-security-group"
+    Environment = var.environment
+  }
+}
+
+# Inbound HTTP from ALB
+resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_alb_http" {
+  security_group_id            = aws_security_group.ec2_security_group.id
+  from_port                    = var.http_port
+  to_port                      = var.http_port
+  ip_protocol                  = "tcp"
+  description                  = "Allow HTTP traffic from ALB"
+  referenced_security_group_id = aws_security_group.alb_security_group.id
+}
+
+# Inbound HTTPS from ALB
+resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_alb_https" {
+  security_group_id            = aws_security_group.ec2_security_group.id
+  from_port                    = var.https_port
+  to_port                      = var.https_port
+  ip_protocol                  = "tcp"
+  description                  = "Allow HTTPS traffic from ALB"
+  referenced_security_group_id = aws_security_group.alb_security_group.id
+}
+
+# Inbound PostgreSQL
+resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_db" {
+  security_group_id = aws_security_group.ec2_security_group.id
+  from_port         = var.db_port
+  to_port           = var.db_port
+  ip_protocol       = "tcp"
+  description       = "Allow PostgreSQL traffic"
+  cidr_ipv4         = var.vpc_cidr
+}
+
+# Outbound HTTPS for container pulls
+resource "aws_vpc_security_group_egress_rule" "ec2_egress_https" {
+  security_group_id = aws_security_group.ec2_security_group.id
+  from_port         = var.https_port
+  to_port           = var.https_port
+  ip_protocol       = "tcp"
+  description       = "Allow HTTPS for container pulls and updates"
+  cidr_ipv4         = "0.0.0.0/0"
+}
+
+# Outbound PostgreSQL
+resource "aws_vpc_security_group_egress_rule" "ec2_egress_db" {
+  security_group_id = aws_security_group.ec2_security_group.id
+  from_port         = var.db_port
+  to_port           = var.db_port
+  ip_protocol       = "tcp"
+  description       = "Allow PostgreSQL outbound traffic"
+  cidr_ipv4         = var.vpc_cidr
+}
+
+
+### ECS - not using rn but will keep for now. might delete later if still not using.
 # Base security group
 resource "aws_security_group" "ecs_security_group" {
   name        = "${var.environment}-ecs-security-group"

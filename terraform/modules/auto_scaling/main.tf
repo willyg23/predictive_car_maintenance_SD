@@ -1,23 +1,35 @@
 # Launch Template
 resource "aws_launch_template" "app_launch_template" {
   name_prefix   = "${var.environment}-launch-template"
-  image_id      = "ami-0c55b159cbfafe1f0" # Amazon Linux 2 AMI
+  image_id      = "ami-0866a04d72a1f5479" # Latest Amazon Linux 2023 AMI for us-east-2
   instance_type = "t3.micro"
 
   network_interfaces {
     associate_public_ip_address = true
-    security_groups             = [var.ecs_security_group_id]
+    security_groups             = [var.ec2_security_group_id]
   }
 
   user_data = base64encode(<<-EOF
               #!/bin/bash
+              set -e
+              
+              # Update system
               yum update -y
+              
+              # Install and configure CloudWatch agent
+              yum install -y amazon-cloudwatch-agent
+              systemctl start amazon-cloudwatch-agent
+              systemctl enable amazon-cloudwatch-agent
+              
+              # Install and start Docker
               yum install -y docker
               systemctl start docker
               systemctl enable docker
+              
+              # Pull and run application container
               aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ${var.ecr_repository_url}
               docker pull ${var.ecr_repository_url}:latest
-              docker run -p 80:80 ${var.ecr_repository_url}:latest
+              docker run -d --restart always -p 80:80 ${var.ecr_repository_url}:latest
               EOF
   )
 
@@ -28,7 +40,14 @@ resource "aws_launch_template" "app_launch_template" {
       Environment = var.environment
     }
   }
+
+  iam_instance_profile {
+    name = var.instance_profile_name
+  }
+
+
 }
+
 
 # Auto Scaling Group
 resource "aws_autoscaling_group" "app_asg" {

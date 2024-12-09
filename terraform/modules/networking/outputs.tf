@@ -58,6 +58,11 @@ output "ecs_security_group_id" {
   value       = module.security_groups.ecs_security_group_id
 }
 
+output "ec2_security_group_id" {
+  description = "ID of the EC2 security group"
+  value       = module.security_groups.ec2_security_group_id
+}
+
 output "rds_security_group_id" {
   description = "RDS security group id"
   value       = module.security_groups.rds_security_group_id
