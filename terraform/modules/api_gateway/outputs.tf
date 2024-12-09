@@ -1,14 +1,14 @@
 output "api_gateway_url" {
-  description = "URL of the API Gateway deployment"
-  value       = "${aws_api_gateway_stage.main.invoke_url}/api"
+  description = "URL of the HTTP API Gateway deployment"
+  value       = "${aws_apigatewayv2_api.main.api_endpoint}/api"
 }
 
-output "rest_api_id" {
-  description = "ID of the REST API Gateway"
-  value       = aws_api_gateway_rest_api.main.id
+output "api_id" {
+  description = "ID of the HTTP API Gateway"
+  value       = aws_apigatewayv2_api.main.id
 }
 
-output "vpc_link_id" {
-  description = "ID of the VPC Link"
-  value       = aws_api_gateway_vpc_link.main.id
+output "stage_id" {
+  description = "ID of the HTTP API Gateway stage"
+  value       = aws_apigatewayv2_stage.main.id
 }
