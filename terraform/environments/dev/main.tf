@@ -61,11 +61,11 @@ module "ec2_iam" {
 }
 
 module "api_gateway" {
-  source = "../../modules/api_gateway"
+  source           = "../../modules/api_gateway"
   environment      = "dev"
-  alb_dns_name    = module.load_balancer.alb_dns_name
+  alb_dns_name     = module.load_balancer.alb_dns_name
   alb_listener_arn = module.load_balancer.alb_listener_arn
-  vpc_id          = module.networking.vpc_main_id
+  vpc_id           = module.networking.vpc_main_id
 }
 
 

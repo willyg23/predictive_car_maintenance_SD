@@ -9,24 +9,22 @@ resource "aws_launch_template" "app_launch_template" {
     security_groups             = [var.ec2_security_group_id]
   }
 
+  # yes i hardcoded the api key. no i don't give a fuck. not right now at least. will figure out a better way to do it later. but we're on a crunch rn.
   user_data = base64encode(<<-EOF
               #!/bin/bash
-              set -e
               
-              # Update system
+              # Set environment variables
+              echo "OPENAI_API_KEY=placeholder" >> /etc/environment
+              
+              # Source the environment file
+              source /etc/environment
+              
+              # Rest of your existing user data script
               yum update -y
-              
-              # Install and configure CloudWatch agent
-              yum install -y amazon-cloudwatch-agent
-              systemctl start amazon-cloudwatch-agent
-              systemctl enable amazon-cloudwatch-agent
-              
-              # Install and start Docker
               yum install -y docker
               systemctl start docker
               systemctl enable docker
               
-              # Pull and run application container
               aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin ${var.ecr_repository_url}
               docker pull ${var.ecr_repository_url}:latest
               docker run -d --restart always -p 80:80 ${var.ecr_repository_url}:latest
@@ -44,8 +42,6 @@ resource "aws_launch_template" "app_launch_template" {
   iam_instance_profile {
     name = var.instance_profile_name
   }
-
-
 }
 
 

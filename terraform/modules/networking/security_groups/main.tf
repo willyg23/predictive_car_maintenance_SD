@@ -51,6 +51,15 @@ resource "aws_vpc_security_group_egress_rule" "ec2_egress_https" {
   cidr_ipv4         = "0.0.0.0/0"
 }
 
+resource "aws_vpc_security_group_egress_rule" "ec2_egress_http" {
+  security_group_id = aws_security_group.ec2_security_group.id
+  from_port         = var.http_port
+  to_port           = var.http_port
+  ip_protocol       = "tcp"
+  description       = "Allow HTTP outbound traffic"
+  cidr_ipv4         = "0.0.0.0/0"
+}
+
 # Outbound PostgreSQL
 resource "aws_vpc_security_group_egress_rule" "ec2_egress_db" {
   security_group_id = aws_security_group.ec2_security_group.id
@@ -179,15 +188,16 @@ resource "aws_vpc_security_group_ingress_rule" "alb_ingress_https" {
   cidr_ipv4         = "0.0.0.0/0"
 }
 
-# Outbound to ECS instances
-resource "aws_vpc_security_group_egress_rule" "alb_egress_ecs" {
+# Outbound to EC2 instances
+resource "aws_vpc_security_group_egress_rule" "alb_egress_ec2" {
   security_group_id            = aws_security_group.alb_security_group.id
   from_port                    = var.http_port
   to_port                      = var.http_port
   ip_protocol                  = "tcp"
-  description                  = "Allow traffic to ECS instances"
-  referenced_security_group_id = aws_security_group.ecs_security_group.id
+  description                  = "Allow traffic to EC2 instances"
+  referenced_security_group_id = aws_security_group.ec2_security_group.id
 }
+
 
 
 
