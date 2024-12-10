@@ -1,0 +1,13 @@
+meta {
+  name: Test API Gateway
+  type: http
+}
+
+post https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/api
+header {
+    "Content-Type": "application/json"
+}
+body {
+    "key": "value"
+}
+

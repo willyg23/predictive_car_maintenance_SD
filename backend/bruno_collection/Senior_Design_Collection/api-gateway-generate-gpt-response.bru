@@ -1,0 +1,23 @@
+meta {
+  name: api-gateway-generate-gpt-response
+  type: http
+  seq: 3
+}
+
+post {
+  url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/generate-gpt-response
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+      "prompt": "How do cars in the movie cars have kids?how would you imagine that working, on a car-anatomical level?",
+      "model": "gpt-4"
+  }
+  
+}

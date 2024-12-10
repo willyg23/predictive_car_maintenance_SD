@@ -22,3 +22,8 @@ output "listener_arn" {
   description = "ARN of the listener"
   value       = aws_lb_listener.http.arn
 }
+
+output "alb_listener_arn" {
+  description = "ARN of the ALB HTTP listener"
+  value       = aws_lb_listener.http.arn
+}
