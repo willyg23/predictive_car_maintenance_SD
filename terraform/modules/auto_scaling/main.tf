@@ -12,7 +12,7 @@ resource "aws_launch_template" "app_launch_template" {
   # yes i hardcoded the api key. no i don't give a fuck. not right now at least. will figure out a better way to do it later. but we're on a crunch rn.
   user_data = base64encode(<<-EOF
               #!/bin/bash
-              
+              git
               # Set environment variables
               echo "OPENAI_API_KEY=placeholder" >> /etc/environment
               
@@ -47,15 +47,19 @@ resource "aws_launch_template" "app_launch_template" {
 
 # Auto Scaling Group
 resource "aws_autoscaling_group" "app_asg" {
-  name                      = "${var.environment}-app-asg"
+  name = "${var.environment}-app-asg"
   desired_capacity          = var.desired_capacity
   max_size                  = var.max_size
   min_size                  = var.min_size
+  # use commneted out variables to take down all active instnaces
+  # desired_capacity          = 0
+  # max_size                  = 2
+  # min_size                  = 0
   target_group_arns         = [var.target_group_arn]
   vpc_zone_identifier       = var.public_subnet_ids
   health_check_type         = "ELB"
   health_check_grace_period = var.health_check_grace_period
-  protect_from_scale_in     = true
+  protect_from_scale_in     = false # turn to false when you want to take down all active instances
   termination_policies      = ["OldestInstance", "Default"]
 
   launch_template {
@@ -73,7 +77,6 @@ resource "aws_autoscaling_group" "app_asg" {
 
   lifecycle {
     create_before_destroy = true
-    ignore_changes        = [desired_capacity]
   }
 
   tag {

@@ -31,6 +31,16 @@ resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_alb_https" {
   referenced_security_group_id = aws_security_group.alb_security_group.id
 }
 
+# added to i can ssh into instance from my machine
+resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_ssh" {
+  security_group_id = aws_security_group.ec2_security_group.id
+  from_port         = 22
+  to_port           = 22
+  ip_protocol       = "tcp"
+  description       = "Allow SSH access"
+  cidr_ipv4         = "0.0.0.0/0" # Or your IP for better security
+}
+
 # Inbound PostgreSQL
 resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_db" {
   security_group_id = aws_security_group.ec2_security_group.id

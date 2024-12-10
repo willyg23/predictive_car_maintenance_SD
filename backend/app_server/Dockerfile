@@ -9,7 +9,13 @@ COPY . .
 
 EXPOSE 80
 
-CMD ["python", "app.py"]
+ENV PORT=80
+ENV OPENAI_API_KEY=placeholder
+# ^add api key when you dockerize, but turn back to "placeholder" when you commit code to github
+
+
+CMD ["python", "routes.py"]
+
 
 # steps to dockerize:
 #aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 273354637937.dkr.ecr.us-east-2.amazonaws.com
