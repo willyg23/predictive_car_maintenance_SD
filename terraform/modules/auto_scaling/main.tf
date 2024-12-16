@@ -48,13 +48,13 @@ resource "aws_launch_template" "app_launch_template" {
 # Auto Scaling Group
 resource "aws_autoscaling_group" "app_asg" {
   name = "${var.environment}-app-asg"
-  desired_capacity          = var.desired_capacity
-  max_size                  = var.max_size
-  min_size                  = var.min_size
+  # desired_capacity          = var.desired_capacity
+  # max_size                  = var.max_size
+  # min_size                  = var.min_size
   # use commneted out variables to take down all active instnaces
-  # desired_capacity          = 0
-  # max_size                  = 2
-  # min_size                  = 0
+  desired_capacity          = 0
+  max_size                  = 2
+  min_size                  = 0
   target_group_arns         = [var.target_group_arn]
   vpc_zone_identifier       = var.public_subnet_ids
   health_check_type         = "ELB"
