@@ -43,15 +43,15 @@ module "auto_scaling" {
 }
 
 # VPC Endpoints Module
-module "vpc_endpoints" {
-  source = "../../modules/networking/vpc_endpoints"
+# module "vpc_endpoints" {
+#   source = "../../modules/networking/vpc_endpoints"
 
-  environment           = "dev"
-  region                = "us-east-2"
-  vpc_id                = module.networking.vpc_main_id
-  private_subnet_ids    = module.networking.private_subnet_ids
-  ec2_security_group_id = module.networking.ec2_security_group_id
-}
+#   environment           = "dev"
+#   region                = "us-east-2"
+#   vpc_id                = module.networking.vpc_main_id
+#   private_subnet_ids    = module.networking.private_subnet_ids
+#   ec2_security_group_id = module.networking.ec2_security_group_id
+# }
 
 # EC2 IAM Role Module
 module "ec2_iam" {
