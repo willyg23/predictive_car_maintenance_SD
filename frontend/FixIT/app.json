@@ -1,4 +1,7 @@
 {
   "name": "FixIT",
-  "displayName": "FixIT"
+  "displayName": "FixIT",
+  "expo": {
+    "assets": ["./assets"]
+  }
 }

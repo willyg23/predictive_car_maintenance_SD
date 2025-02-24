@@ -1,153 +1,326 @@
-import { Image, StyleSheet, Text, View } from "react-native";
-
-
+import { StyleSheet, View, Text, Pressable, Animated, ScrollView } from "react-native";
+import { useState, useRef } from 'react';
+import Header from "../components/Header";
+import ScanButton from "../components/ScanButton";
+import FeatureGrid from "../components/FeatureGrid";
+import NavigationBar from "../components/NavigationBar";
+import VehicleSection from "../components/VehicleSection";
+import SetupBanner from "../components/SetupBanner";
 
 const HomeScreen = () => {
-    return(
+    const [activeTab, setActiveTab] = useState('stats');
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+
+    const startPulse = () => {
+        Animated.sequence([
+            Animated.timing(pulseAnim, {
+                toValue: 1.1,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+            Animated.timing(pulseAnim, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    };
+
+    return (
         <View style={styles.container}>
-
-            <View style={styles.headerContainer}>
-                <View style={{marginLeft:30, margin:"auto"}}>
-                    <View>
-                        <Text style={styles.header1Text}>OBD2 Scanner</Text>
-                    </View> 
-
-                    <View>
-                        <Text style={styles.string}>Connected: Honda Civic 2022</Text>
-                    </View>
+            <Header />
+            <ScrollView 
+                style={styles.scrollView}
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Mode Switcher */}
+                <View style={styles.modeSwitcher}>
+                    <Pressable 
+                        style={[styles.modeTab, activeTab === 'stats' && styles.activeTab]}
+                        onPress={() => setActiveTab('stats')}
+                    >
+                        <Text style={[styles.modeText, activeTab === 'stats' && styles.activeText]}>Stats</Text>
+                    </Pressable>
+                    <Pressable 
+                        style={[styles.modeTab, activeTab === 'vibes' && styles.activeTab]}
+                        onPress={() => setActiveTab('vibes')}
+                    >
+                        <Text style={[styles.modeText, activeTab === 'vibes' && styles.activeText]}>Vibes</Text>
+                    </Pressable>
                 </View>
-            </View>
 
-            <View style={styles.doubleBoxContainer}>
-                <View style={styles.box}>
-                    <View style={styles.centerIconContainer}>
-                        <View style={styles.centerIcon}>
-                            <Image style={styles.icon} source={require("../../assets/thermometer-simple.png")}/>
+                {/* Quick Stats with Interaction */}
+                <View style={styles.statsContainer}>
+                    <Pressable 
+                        style={styles.statCard}
+                        onPress={startPulse}
+                    >
+                        <Animated.View style={[styles.statContent, { transform: [{ scale: pulseAnim }] }]}>
+                            <View style={styles.statHeader}>
+                                <Text style={styles.statEmoji}>🌡️</Text>
+                                <Text style={styles.statTrend}>↗️ 2°</Text>
+                            </View>
+                            <Text style={styles.statValue}>194°F</Text>
+                            <Text style={styles.statLabel}>Engine Temp</Text>
+                            <View style={styles.statIndicator}>
+                                <View style={styles.indicatorDot} />
+                                <Text style={styles.statStatus}>Optimal</Text>
+                            </View>
+                        </Animated.View>
+                    </Pressable>
+
+                    <Pressable style={[styles.statCard, styles.warningCard]}>
+                        <View style={styles.statContent}>
+                            <View style={styles.statHeader}>
+                                <Text style={styles.statEmoji}>⚡</Text>
+                                <Text style={styles.statTrend}>↘️ 0.3V</Text>
+                            </View>
+                            <Text style={styles.statValue}>11.9V</Text>
+                            <Text style={styles.statLabel}>Battery</Text>
+                            <View style={[styles.statIndicator, styles.warningIndicator]}>
+                                <View style={[styles.indicatorDot, styles.warningDot]} />
+                                <Text style={[styles.statStatus, styles.warningText]}>Check Soon</Text>
+                            </View>
                         </View>
+                    </Pressable>
+                </View>
+
+                {/* Interactive Scan Area */}
+                <View style={styles.scanContainer}>
+                    <ScanButton />
+                    <View style={styles.scanInfo}>
+                        <Text style={styles.scanHint}>Tap to scan your vehicle</Text>
+                        <Text style={styles.scanStreak}>🔥 3 day streak!</Text>
                     </View>
+                </View>
 
-                    <View style={styles.textContainer}>
-                        <Text style={styles.boxTitle}>Engine Temp</Text>
+                {/* Quick Actions with Categories */}
+                <View style={styles.quickActions}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Quick Actions</Text>
+                        <Text style={styles.sectionBadge}>New</Text>
                     </View>
+                    <FeatureGrid />
+                </View>
 
-                    <View style={styles.valueContainer}>
-                        <Text style={styles.boxValue}>194°F</Text>
+                <SetupBanner />
+                <VehicleSection />
+
+                {/* Activity Feed */}
+                <View style={styles.recentActivity}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Activity</Text>
+                        <Text style={styles.viewAll}>View All</Text>
                     </View>
-                   
-                        
+                    <Pressable style={styles.activityCard}>
+                        <View style={styles.activityHeader}>
+                            <Text style={styles.activityEmoji}>🔍</Text>
+                            <View style={styles.activityInfo}>
+                                <Text style={styles.activityTitle}>Diagnostic Scan</Text>
+                                <Text style={styles.activityTime}>2h ago</Text>
+                            </View>
+                            <View style={styles.activityBadge}>
+                                <Text style={styles.badgeText}>All Good</Text>
+                            </View>
+                        </View>
+                    </Pressable>
                 </View>
-                <View style={styles.box}>
-
-                </View>
-            </View>
-
-            <View style={styles.rectangleBox}>
-
-            </View>
-
-            <View style={styles.DoublerectangleBoxContainer}>
-                <View style={styles.rectangle}>
-
-                </View>
-                <View style={styles.rectangle}>
-
-                </View>
-            </View>
-            
-            
+            </ScrollView>
+            <NavigationBar />
         </View>
-    )
-}
-
+    );
+};
 
 const styles = StyleSheet.create({
     container: {
-        
-        // borderWidth:1,
-        // borderColor:"black"
+        flex: 1,
+        backgroundColor: '#000000',
     },
-    headerContainer:{
-        
-        backgroundColor:"#000000",
-        height:100,
-        
+    scrollView: {
+        flex: 1,
     },
-    header1Text:{
-        fontSize:30,
-        fontWeight:800,
-        color:"white"
+    content: {
+        padding: 16,
+        gap: 20,
     },
-    string:{
-        fontSize:18,
-        color:"white"
+    modeSwitcher: {
+        flexDirection: 'row',
+        backgroundColor: '#1A1A1A',
+        borderRadius: 20,
+        padding: 4,
+        marginBottom: 8,
     },
-    doubleBoxContainer:{
-        
-        flexDirection: "row",
-        marginTop:25,
+    modeTab: {
+        flex: 1,
+        paddingVertical: 8,
+        alignItems: 'center',
+        borderRadius: 16,
     },
-    box:{
-        borderColor:"grey",
-        borderWidth:1,
-        width:"40%",
-        height:160,
-        margin:"auto",
-        borderRadius:10,
-        backgroundColor:"white"
+    activeTab: {
+        backgroundColor: '#2D2D2D',
     },
-    rectangleBox:{
-        borderColor:"grey",
-        borderWidth:1,
-        width:"89%",
-        height:80,
-        borderRadius:10,
-        margin:"auto",
-        marginTop:30,
-        backgroundColor:"white"
+    modeText: {
+        color: '#808080',
+        fontSize: 16,
+        fontWeight: '600',
     },
-    DoublerectangleBoxContainer:{
-        marginTop:30,
-        flexDirection: "row",
+    activeText: {
+        color: '#FFFFFF',
     },
-    rectangle:{
-        
-        backgroundColor:"black",
-        height:80,
-        width:"40%",
-        margin:"auto",
-        borderRadius:10,
+    statsContainer: {
+        flexDirection: 'row',
+        gap: 12,
     },
-    centerIconContainer:{
-        // borderColor:"black",
-        // borderWidth:1,
+    statCard: {
+        flex: 1,
+        backgroundColor: '#1A1A1A',
+        borderRadius: 24,
+        padding: 16,
+        overflow: 'hidden',
     },
-    centerIcon:{
-        margin:"auto",
-        marginTop:20
+    statContent: {
+        alignItems: 'center',
     },
-    icon:{
-        width: 50,
-        height: 50,
+    statHeader: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
     },
-    textContainer:{
-        marginTop:10
+    warningCard: {
+        backgroundColor: '#2D1B1B',
     },
-    boxTitle:{
-        fontSize:18,
-        textAlign:'center'
+    statEmoji: {
+        fontSize: 24,
     },
-    valueContainer:{
-
+    statTrend: {
+        fontSize: 14,
     },
-    boxValue:{
-        fontSize:20,
-        textAlign:"center",
-        fontWeight:"800"
-    }
-
-
-})
-
-
+    statValue: {
+        color: '#FFFFFF',
+        fontSize: 28,
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    statLabel: {
+        color: '#808080',
+        fontSize: 14,
+        marginBottom: 8,
+    },
+    statIndicator: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(74, 222, 128, 0.1)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    indicatorDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: '#4ADE80',
+        marginRight: 6,
+    },
+    warningIndicator: {
+        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    },
+    warningDot: {
+        backgroundColor: '#FF6B6B',
+    },
+    statStatus: {
+        color: '#4ADE80',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    warningText: {
+        color: '#FF6B6B',
+    },
+    scanContainer: {
+        alignItems: 'center',
+        gap: 12,
+    },
+    scanInfo: {
+        alignItems: 'center',
+    },
+    scanHint: {
+        color: '#808080',
+        fontSize: 14,
+    },
+    scanStreak: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        marginTop: 4,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 12,
+    },
+    sectionTitle: {
+        color: '#FFFFFF',
+        fontSize: 20,
+        fontWeight: '700',
+    },
+    sectionBadge: {
+        backgroundColor: '#6C63FF',
+        color: '#FFFFFF',
+        fontSize: 12,
+        fontWeight: '600',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    viewAll: {
+        color: '#6C63FF',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    activityCard: {
+        backgroundColor: '#1A1A1A',
+        borderRadius: 16,
+        padding: 16,
+    },
+    activityHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    activityEmoji: {
+        fontSize: 20,
+        marginRight: 12,
+    },
+    activityInfo: {
+        flex: 1,
+    },
+    activityTitle: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    activityTime: {
+        color: '#808080',
+        fontSize: 12,
+        marginTop: 2,
+    },
+    activityBadge: {
+        backgroundColor: 'rgba(74, 222, 128, 0.1)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    badgeText: {
+        color: '#4ADE80',
+        fontSize: 12,
+        fontWeight: '600',
+    },
+    quickActions: {
+        gap: 12,
+    },
+    recentActivity: {
+        gap: 12,
+    },
+});
 
 export default HomeScreen;
