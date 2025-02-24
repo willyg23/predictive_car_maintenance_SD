@@ -60,4 +60,3 @@ variable "dev_port" {
   type        = number
   default     = 3000
 }
-
