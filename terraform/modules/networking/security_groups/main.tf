@@ -11,6 +11,7 @@ resource "aws_security_group" "rds_security_group" {
   }
 }
 
+# TODO: change this to accept ingress from lambda
 # Inbound PostgreSQL from ECS
 resource "aws_vpc_security_group_ingress_rule" "rds_ingress_postgres" {
   security_group_id            = aws_security_group.rds_security_group.id
@@ -18,5 +19,5 @@ resource "aws_vpc_security_group_ingress_rule" "rds_ingress_postgres" {
   to_port                      = var.db_port
   ip_protocol                  = "tcp"
   description                  = "Allow PostgreSQL from ECS instances"
-  referenced_security_group_id = aws_security_group.ecs_security_group.id
+  # referenced_security_group_id = aws_security_group.ecs_security_group.id
 }
