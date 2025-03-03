@@ -1,3 +1,15 @@
+# Lambda
+resource "aws_security_group" "lambda_security_group" {
+  name_prefix = "${var.environment}-lambda-security-group"
+  vpc_id      = var.vpc_main_id
+
+  tags = {
+    Name        = "${var.environment}-lambda-security-group"
+    Environment = var.environment
+  }
+}
+
+
 # RDS
 # Base security group for RDS
 resource "aws_security_group" "rds_security_group" {
