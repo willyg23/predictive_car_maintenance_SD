@@ -12,3 +12,14 @@ output "db_instance_identifier" {
   description = "The identifier of the RDS database instance."
   value       = aws_db_instance.database.id
 }
+
+output "db_instance_arn" {
+  description = "The ARN of the RDS database instance."
+  value       = aws_db_instance.database.arn
+}
+
+# output "DB_PASSWORD" {
+#   description = "The database password"
+#   value       = var.DB_PASSWORD
+#   sensitive   = true
+# }

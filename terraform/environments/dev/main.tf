@@ -36,6 +36,13 @@ module "api_gateway" {
   vpc_id           = module.networking.vpc_main_id
 }
 
+module "database" {
+  source = "../../modules/database"
+  environment = "dev"
+  DB_PASSWORD = "" # change to OS
+
+}
+
 module "auth" {
   source       = "../../modules/auth"
   environment  = "dev"
