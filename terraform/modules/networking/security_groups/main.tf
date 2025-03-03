@@ -11,11 +11,11 @@ resource "aws_security_group" "api_lambda_security_group" {
 
 # Outbound rule: Allow Lambda to connect to RDS on PostgreSQL port
 resource "aws_vpc_security_group_egress_rule" "lambda_to_rds" {
-  security_group_id = aws_security_group.api_lambda_security_group.id
-  from_port         = var.db_port
-  to_port           = var.db_port
-  ip_protocol       = "tcp"
-  description       = "Allow outbound traffic from Lambda to RDS"
+  security_group_id            = aws_security_group.api_lambda_security_group.id
+  from_port                    = var.db_port
+  to_port                      = var.db_port
+  ip_protocol                  = "tcp"
+  description                  = "Allow outbound traffic from Lambda to RDS"
   referenced_security_group_id = aws_security_group.rds_security_group.id
 }
 

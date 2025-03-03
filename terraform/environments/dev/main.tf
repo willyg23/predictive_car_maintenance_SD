@@ -31,39 +31,39 @@ module "ecr" {
 # }
 
 module "api_gateway" {
-  source           = "../../modules/api_gateway"
-  environment      = "dev"
-  vpc_id           = module.networking.vpc_main_id
+  source      = "../../modules/api_gateway"
+  environment = "dev"
+  vpc_id      = module.networking.vpc_main_id
 }
 
 module "database" {
-  source = "../../modules/database"
+  source      = "../../modules/database"
   environment = "dev"
   DB_PASSWORD = "" # change to OS
 
 }
 
 module "lambda_iam" {
-  source = "../../global/iam/compute/lambda"
+  source      = "../../global/iam/compute/lambda"
   environment = "dev"
 }
 
 module "security_groups" {
-  source = "../../modules/networking/security_groups"
+  source      = "../../modules/networking/security_groups"
   environment = "dev"
   vpc_main_id = module.networking.vpc_main_idß
 }
 
 module "lambda" {
-  source = "../../modules/compute/lambda"
-  environment = "dev"
-  DB_PASSWORD = "" # change to OS
-  repository_registry_id = module.ecr.repository_registry_id
-  repository_arn = module.ecr.repository_arn
-  repository_name = module.ecr.repository_name
-  repository_url = module.ecr.repository_url
-  vpc_private_subnet_ids = module.networking.private_subnet_ids
-  lambda_role_arn = module.lambda_iam.lambda_execution_role_arn
+  source                       = "../../modules/compute/lambda"
+  environment                  = "dev"
+  DB_PASSWORD                  = "" # change to OS
+  repository_registry_id       = module.ecr.repository_registry_id
+  repository_arn               = module.ecr.repository_arn
+  repository_name              = module.ecr.repository_name
+  repository_url               = module.ecr.repository_url
+  vpc_private_subnet_ids       = module.networking.private_subnet_ids
+  lambda_role_arn              = module.lambda_iam.lambda_execution_role_arn
   api_lambda_security_group_id = module.security_groups.api_lambda_security_group_id
 
 }
