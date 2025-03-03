@@ -67,7 +67,7 @@ variable "vpc_private_subnet_ids" {
   type        = list(string)
 }
 
-variable "api_lambda_security_group" {
+variable "api_lambda_security_group_id" {
   description = "api lambda security group"
   type        = string
 }
