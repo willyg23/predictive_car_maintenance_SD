@@ -6,25 +6,21 @@ variable "environment" {
 variable "repository_url" {
   description = "The URL of the ECR repository containing the Lambda Docker image"
   type        = string
-  default     = module.ecr.repository_url
 }
 
 variable "repository_arn" {
   description = "The ARN of the ECR repository"
   type        = string
-  default     = module.ecr.repository_arn
 }
 
 variable "repository_name" {
   description = "The name of the ECR repository"
   type        = string
-  default     = module.ecr.repository_name
 }
 
 variable "repository_registry_id" {
   description = "The registry ID where the ECR repository was created"
   type        = string
-  default     = module.ecr.repository_registry_id
 }
 
 variable "lambda_image_tag" {
