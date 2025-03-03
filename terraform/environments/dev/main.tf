@@ -51,7 +51,7 @@ module "lambda_iam" {
 module "security_groups" {
   source      = "../../modules/networking/security_groups"
   environment = "dev"
-  vpc_main_id = module.networking.vpc_main_idß
+  vpc_main_id = module.networking.vpc_main_id
 }
 
 module "lambda" {
