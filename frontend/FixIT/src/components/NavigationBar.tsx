@@ -1,27 +1,50 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../App';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const NavigationBar = () => {
+    const navigation = useNavigation<NavigationProp>();
+    const route = useRoute();
+
     return (
         <View style={styles.navbar}>
             <NavItem 
                 emoji="🚗"
                 text="Scan" 
-                active 
+                active={route.name === 'HomeScreen'}
+                onPress={() => navigation.navigate('HomeScreen')}
             />
             <NavItem 
                 emoji="🔧"
                 text="Maintenance" 
+                active={route.name === 'Maintenance'}
+                onPress={() => navigation.navigate('Maintenance')}
             />
             <NavItem 
                 emoji="🛡️"
                 text="Premium" 
+                active={route.name === 'Premium'}
+                onPress={() => navigation.navigate('Premium')}
             />
         </View>
     );
 };
 
-const NavItem = ({ emoji, text, active }: { emoji: string, text: string, active?: boolean }) => (
-    <Pressable style={styles.navItem}>
+const NavItem = ({ 
+    emoji, 
+    text, 
+    active, 
+    onPress 
+}: { 
+    emoji: string, 
+    text: string, 
+    active?: boolean,
+    onPress: () => void 
+}) => (
+    <Pressable style={styles.navItem} onPress={onPress}>
         <Text style={[styles.navIcon, active && styles.activeNavText]}>{emoji}</Text>
         <Text style={[styles.navText, active && styles.activeNavText]}>{text}</Text>
     </Pressable>

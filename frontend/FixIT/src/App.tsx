@@ -22,25 +22,38 @@ import Login from './screens/Login';
 import SignIn from './screens/SiginIn';
 import CarData from './screens/CarData';
 import HomeScreen from './screens/HomeScreen';
+import MaintenanceScreen from './screens/MaintenanceScreen';
+import PremiumScreen from './screens/PremiumScreen';
 
-const Stack = createNativeStackNavigator();
+export type RootStackParamList = {
+  GettingStarted: undefined;
+  CarData: undefined;
+  HomeScreen: undefined;
+  Maintenance: undefined;
+  Premium: undefined;
+  Login: undefined;
+  SignIn: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-        <NavigationContainer>
-          <Stack.Navigator>
-            <Stack.Screen name='GettingStarted' component={GettingStarted}/>
-            <Stack.Screen name='CarData' component={CarData}/>
-            <Stack.Screen name='HomeScreen' component={HomeScreen} options={{headerShown:false}}/>
-            {/* <Stack.Screen name='Login' component={Login}/>
-            <Stack.Screen name='SignIn' component={SignIn}/> */}
-          </Stack.Navigator>
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen name='GettingStarted' component={GettingStarted}/>
+          <Stack.Screen name='CarData' component={CarData}/>
+          <Stack.Screen name='HomeScreen' component={HomeScreen} options={{headerShown:false}}/>
+          <Stack.Screen name='Maintenance' component={MaintenanceScreen} options={{headerShown:false}}/>
+          <Stack.Screen name='Premium' component={PremiumScreen} options={{headerShown:false}}/>
+          {/* <Stack.Screen name='Login' component={Login}/>
+          <Stack.Screen name='SignIn' component={SignIn}/> */}
+        </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaView>
-    
   );
 }
 
