@@ -24,6 +24,7 @@ import CarData from './screens/CarData';
 import HomeScreen from './screens/HomeScreen';
 import MaintenanceScreen from './screens/MaintenanceScreen';
 import PremiumScreen from './screens/PremiumScreen';
+import { AddCar } from './screens/AddCar';
 
 export type RootStackParamList = {
   GettingStarted: undefined;
@@ -33,6 +34,7 @@ export type RootStackParamList = {
   Premium: undefined;
   Login: undefined;
   SignIn: undefined;
+  AddCar: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -49,6 +51,8 @@ function App(): React.JSX.Element {
           <Stack.Screen name='HomeScreen' component={HomeScreen} options={{headerShown:false}}/>
           <Stack.Screen name='Maintenance' component={MaintenanceScreen} options={{headerShown:false}}/>
           <Stack.Screen name='Premium' component={PremiumScreen} options={{headerShown:false}}/>
+          <Stack.Screen name='AddCar' component={AddCar} options={{headerShown:false}}/>
+          
           {/* <Stack.Screen name='Login' component={Login}/>
           <Stack.Screen name='SignIn' component={SignIn}/> */}
         </Stack.Navigator>

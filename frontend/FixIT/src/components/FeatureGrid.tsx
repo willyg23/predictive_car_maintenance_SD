@@ -1,6 +1,13 @@
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { RootStackParamList } from "../App";
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const FeatureGrid = () => {
+        const navigation = useNavigation();
+        const route = useRoute();
     return (
         <View style={styles.featureGrid}>
             <View style={styles.featureRow}>
@@ -13,9 +20,12 @@ const FeatureGrid = () => {
                     text="Quick\nScan"
                 />
             </View>
-            <View style={styles.featureButton}>
-                <Text style={styles.disabledText}>Add a vehicle to use FixIT</Text>
-            </View>
+            <Pressable onPress={() => navigation.navigate('AddCar')}>
+                <View style={styles.featureButton}>
+                    <Text style={styles.disabledText}>Add a vehicle to use FixIT</Text>
+                </View>
+            </Pressable>
+           
         </View>
     );
 };

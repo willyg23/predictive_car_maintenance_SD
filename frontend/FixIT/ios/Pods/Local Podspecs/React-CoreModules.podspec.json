@@ -22,9 +22,7 @@
   },
   "frameworks": "UIKit",
   "dependencies": {
-    "DoubleConversion": [
-
-    ],
+    "DoubleConversion": [],
     "fmt": [
       "9.1.0"
     ],
@@ -43,23 +41,13 @@
     "React-jsi": [
       "0.76.1"
     ],
-    "React-RCTBlob": [
-
-    ],
+    "React-RCTBlob": [],
     "SocketRocket": [
       "0.7.1"
     ],
-    "React-jsinspector": [
-
-    ],
-    "ReactCodegen": [
-
-    ],
-    "ReactCommon": [
-
-    ],
-    "React-NativeModulesApple": [
-
-    ]
+    "React-jsinspector": [],
+    "ReactCodegen": [],
+    "ReactCommon": [],
+    "React-NativeModulesApple": []
   }
 }
