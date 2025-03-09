@@ -34,6 +34,8 @@ module "api_gateway" {
   source      = "../../modules/api_gateway"
   environment = "dev"
   vpc_id      = module.networking.vpc_main_id
+  lambda_invoke_arn = module.lambda.invoke_arn
+  lambda_function_name = module.lambda.function_name
 }
 
 module "database" {

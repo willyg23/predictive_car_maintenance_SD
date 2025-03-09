@@ -5,7 +5,7 @@ resource "aws_ecr_repository" "app_repository" {
     scan_on_push = true
   }
 
-  # Enable tag mutability so we can overwrite tags. i.e. the tag "latest"
+  # Enable tag mutability so we can overwrite tags. i.e. the tag "api_lambda"
   image_tag_mutability = "MUTABLE"
 
   # Force delete repository and images when destroying

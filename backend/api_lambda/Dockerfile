@@ -10,9 +10,6 @@ COPY . .
 EXPOSE 80
 
 ENV PORT=80
-ENV OPENAI_API_KEY=placeholder
-# ^add api key when you dockerize, but turn back to "placeholder" when you commit code to github
-
 
 CMD ["python", "routes.py"]
 

@@ -26,7 +26,7 @@ variable "repository_registry_id" {
 variable "lambda_image_tag" {
   description = "The Docker image tag used by the Lambda function"
   type        = string
-  default     = "api_lambda"
+  default     = "api-lambda-latest"
 }
 
 variable "lambda_role_arn" {
