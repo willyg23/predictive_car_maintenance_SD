@@ -1,6 +1,7 @@
 # Lambda Security Group
 resource "aws_security_group" "api_lambda_security_group" {
-  name_prefix = "${var.environment}-lambda-to-db-security-group"
+  name_prefix = "${var.environment}-lambda-to-db-security-group-"
+    # use name_prefix instead of name. because name_prefix allows terraform to create a unique name for each security group. 
   vpc_id      = var.vpc_main_id
 
   tags = {
@@ -21,7 +22,7 @@ resource "aws_vpc_security_group_egress_rule" "lambda_to_rds" {
 
 # RDS Security Group
 resource "aws_security_group" "rds_security_group" {
-  name        = "${var.environment}-rds-security-group"
+  name_prefix        = "${var.environment}-rds-security-group-"
   description = "Security group for RDS instances"
   vpc_id      = var.vpc_main_id
 
