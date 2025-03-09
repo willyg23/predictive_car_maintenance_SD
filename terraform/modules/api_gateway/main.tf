@@ -11,8 +11,6 @@ resource "aws_apigatewayv2_stage" "main" {
   auto_deploy = true
 }
 
-
-
 resource "aws_apigatewayv2_integration" "lambda_integration" {
   api_id                 = aws_apigatewayv2_api.main.id
   integration_type       = "AWS_PROXY"
@@ -21,7 +19,6 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   payload_format_version = "2.0"  # use 2.0 for HTTP APIs
 }
 
-# TODO: change this to target lambda
 # route for health check
 resource "aws_apigatewayv2_route" "health_check" {
   api_id    = aws_apigatewayv2_api.main.id
@@ -35,4 +32,26 @@ resource "aws_lambda_permission" "api_gateway_lambda" {
   function_name = var.lambda_function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*/health"
+}
+
+resource "aws_apigatewayv2_stage" "main" {
+  api_id      = aws_apigatewayv2_api.main.id
+  name        = var.environment
+  auto_deploy = true
+
+  access_log_settings {
+    destination_arn = var.cloudwatch_log_group_arn
+    format = jsonencode({
+      requestId               = "$context.requestId"
+      sourceIp                = "$context.identity.sourceIp"
+      requestTime             = "$context.requestTime"
+      protocol                = "$context.protocol"
+      httpMethod              = "$context.httpMethod"
+      resourcePath            = "$context.resourcePath"
+      routeKey                = "$context.routeKey"
+      status                  = "$context.status"
+      responseLength          = "$context.responseLength"
+      integrationErrorMessage = "$context.integrationErrorMessage"
+    })
+  }
 }

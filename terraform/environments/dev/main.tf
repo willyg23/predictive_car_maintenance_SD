@@ -8,11 +8,6 @@ module "networking" {
   environment = "dev"
 }
 
-module "monitoring" {
-  source      = "../../modules/monitoring/cloudwatch"
-  environment = "dev"
-}
-
 module "ecr" {
   source          = "../../modules/ecr"
   environment     = "dev"
@@ -36,6 +31,12 @@ module "api_gateway" {
   vpc_id               = module.networking.vpc_main_id
   lambda_invoke_arn    = module.lambda.invoke_arn
   lambda_function_name = module.lambda.lambda_function_name
+  cloudwatch_log_group_arn = module.cloudwatch.api_access_log_group_arn
+}
+
+module "cloudwatch" {
+  source = "../../modules/cloudwatch"
+  environment = "dev"
 }
 
 module "database" {

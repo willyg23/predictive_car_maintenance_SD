@@ -18,16 +18,6 @@ resource "aws_cloudwatch_log_group" "rds_upgrade_log_group" {
   }
 }
 
-resource "aws_cloudwatch_log_group" "ec2_instance_logs" {
-  name              = "${var.ec2_log_group_prefix}-${var.environment}-ec2-logs"
-  retention_in_days = var.retention_days
-
-  tags = {
-    Environment = var.environment
-    Name        = "${var.environment}-ec2-logs"
-  }
-}
-
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "${var.vpc_log_prefix}-${var.environment}-vpc-flow-logs"
   retention_in_days = var.retention_days
@@ -38,15 +28,26 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   }
 }
 
-# resource "aws_cloudwatch_log_group" "api_gateway_access_logs" {
-#   name              = "${var.api_log_prefix}-${var.environment}-api-access-logs"
-#   retention_in_days = var.retention_days
+resource "aws_cloudwatch_log_group" "api_gateway_access_logs" {
+  name              = "${var.api_log_prefix}-${var.environment}-api-access-logs"
+  retention_in_days = var.retention_days
 
-#   tags = {
-#     Environment = var.environment
-#     Name        = "${var.environment}-api-access-logs"
-#   }
-# }
+  tags = {
+    Environment = var.environment
+    Name        = "${var.environment}-api-access-logs"
+  }
+}
+
+resource "aws_cloudwatch_log_group" "lambda_logs" {
+  name              = "/aws/lambda/${var.environment}-api-lambda"
+  retention_in_days = var.retention_days
+
+  tags = {
+    Environment = var.environment
+    Name        = "${var.environment}-lambda-logs"
+  }
+}
+
 
 # resource "aws_cloudwatch_log_group" "api_gateway_execution_logs" {
 #   name              = "${var.api_log_prefix}-${var.environment}-api-execution-logs"
