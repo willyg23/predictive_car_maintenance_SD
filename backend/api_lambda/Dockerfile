@@ -11,8 +11,7 @@ EXPOSE 80
 
 ENV PORT=80
 
-CMD ["python", "routes.py"]
-
+CMD [ "routes.lambda_handler" ]
 
 # steps to dockerize:
     # - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 273354637937.dkr.ecr.us-east-2.amazonaws.com
