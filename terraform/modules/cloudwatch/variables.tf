@@ -6,7 +6,7 @@ variable "environment" {
 variable "retention_days" {
   description = "Number of days to retain CloudWatch logs"
   type        = number
-  default     = 30
+  default     = 7
 }
 
 variable "rds_log_group_prefix" {
