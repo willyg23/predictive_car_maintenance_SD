@@ -5,19 +5,10 @@ meta {
 }
 
 post {
-  url: http://127.0.0.1:5000/generate-gpt-response
-  body: json
+  url: http://127.0.0.1:5000/health
   auth: none
 }
 
 headers {
   Content-Type: application/json
-}
-
-body:json {
-  {
-      "prompt": "How do cars in the movie cars have kids?how would you imagine that working, on a car-anatomical level?",
-      "model": "gpt-4"
-  }
-  
 }
