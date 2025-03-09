@@ -41,6 +41,8 @@ module "api_gateway" {
 module "database" {
   source      = "../../modules/database"
   environment = "dev"
+  rds_subnet_group_name = module.networking.rds_subnet_group_name
+  rds_security_group_id = module.networking.rds_security_group_id
   DB_PASSWORD = "" # change to OS
 
 }

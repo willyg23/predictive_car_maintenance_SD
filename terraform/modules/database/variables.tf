@@ -44,3 +44,13 @@ variable "db_parameter_group_name" {
   type        = string
   default     = "default.postgres16"
 }
+
+variable "rds_subnet_group_name" {
+  description = "Name of the RDS subnet group"
+  type        = string
+}
+
+variable "rds_security_group_id" {
+  description = "ID of the RDS security group"
+  type        = string
+}
