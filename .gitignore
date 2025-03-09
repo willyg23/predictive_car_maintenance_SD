@@ -1,0 +1,28 @@
+
+
+.env
+.venv
+
+# Terraform files and directories
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.auto.tfvars
+.terraformrc
+terraform.rc
+crash.log
+crash.*.log
+.DS_Store
+
+# Specifically ignore provider files
+**/.terraform/providers/registry.terraform.io/hashicorp/aws/**
+
+# Extra specific pattern matching files because if git gives me another error ima turn my macbook into a fucking ipad
+terraform/environments/dev/.terraform/providers/registry.terraform.io/hashicorp/aws/5.75.1/darwin_arm64/terraform-provider-aws_v5.75.1_x5
+terraform/global/iam/terraform_state/.terraform/providers/registry.terraform.io/hashicorp/aws/5.74.0/darwin_arm64/terraform-provider-aws_v5.74.0_x5
+
+# don't ignore example files
+!terraform.tfvars.example
+!example.tfvars
+

@@ -1,5 +1,5 @@
 variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "Deployment environment (e.g., dev, staging, prod)"
   type        = string
 }
 
@@ -8,3 +8,4 @@ variable "region" {
   type        = string
   default     = "us-east-2"
 }
+

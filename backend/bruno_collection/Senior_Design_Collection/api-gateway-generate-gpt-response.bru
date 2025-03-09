@@ -1,23 +1,15 @@
 meta {
-  name: api-gateway-generate-gpt-response
+  name: health-check-endpoint
   type: http
-  seq: 3
+  seq: 1
 }
 
-post {
-  url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/generate-gpt-response
-  body: json
+get {
+  url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/health
+  body: none
   auth: none
 }
 
 headers {
   Content-Type: application/json
-}
-
-body:json {
-  {
-      "prompt": "hello gpt please say hi and print hello world",
-      "model": "gpt-4"
-  }
-  
 }
