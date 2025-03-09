@@ -1,6 +1,7 @@
 resource "aws_lambda_function" "api_lambda" {
   function_name = "${var.environment}-api-lambda"
   package_type  = "Image"
+  architectures = ["arm64"]
   image_uri     = "${var.repository_url}:${var.lambda_image_tag}"
   role          = var.lambda_role_arn
   memory_size   = var.lambda_memory_size
