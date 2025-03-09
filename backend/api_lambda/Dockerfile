@@ -17,3 +17,13 @@ CMD [ "routes.lambda_handler" ]
     #     - for no cache, run: docker buildx build --no-cache --platform linux/arm64 --provenance=false -t api-lambda-image:api-lambda-latest .
     # - docker tag api-lambda-image:api-lambda-latest 273354637937.dkr.ecr.us-east-2.amazonaws.com/dev-dev_ecr:api-lambda-latest
     # - docker push 273354637937.dkr.ecr.us-east-2.amazonaws.com/dev-dev_ecr:api-lambda-latest
+# how to run the container locally
+    # run the container normally in detached mode
+    # docker run -d -p 9000:8080 --name api-lambda-local-container api-lambda-image:api-lambda-latest
+
+# how to get into the container running locally
+    # get a shell inside the running container
+    # docker exec -it api-lambda-local-container bash
+
+# how stop the container running locally
+    # docker stop api-lambda-local-container
