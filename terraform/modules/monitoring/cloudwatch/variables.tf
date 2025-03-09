@@ -21,24 +21,6 @@ variable "ec2_log_group_prefix" {
   default     = "/aws/ec2"
 }
 
-variable "ecs_log_group_prefix" {
-  description = "Prefix for ECS related CloudWatch log groups"
-  type        = string
-  default     = "/aws/ecs"
-}
-
-variable "auto_scaling_group_log_prefix" {
-  description = "Prefix for Auto Scaling Group CloudWatch log groups"
-  type        = string
-  default     = "/aws/asg"
-}
-
-variable "load_balancer_log_prefix" {
-  description = "Prefix for Load Balancer related CloudWatch log groups"
-  type        = string
-  default     = "/aws/lb"
-}
-
 variable "vpc_log_prefix" {
   description = "Prefix for VPC Flow Logs CloudWatch log groups"
   type        = string
