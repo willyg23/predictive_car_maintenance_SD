@@ -13,7 +13,13 @@ def hello_world():
 
 @app.route("/health")
 def health_check():
-    return jsonify({"status": "healthy"}), 200
+    console.log("entering health check function")
+    return {
+        "isBase64Encoded": False,
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps({"status": "healthy"})
+    }
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 80)))

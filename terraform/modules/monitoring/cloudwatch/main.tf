@@ -28,46 +28,6 @@ resource "aws_cloudwatch_log_group" "ec2_instance_logs" {
   }
 }
 
-resource "aws_cloudwatch_log_group" "ecs_container_logs" {
-  name              = "${var.ecs_log_group_prefix}-${var.environment}-ecs-logs"
-  retention_in_days = var.retention_days
-
-  tags = {
-    Environment = var.environment
-    Name        = "${var.environment}-ecs-logs"
-  }
-}
-
-resource "aws_cloudwatch_log_group" "auto_scaling_group_logs" {
-  name              = "${var.auto_scaling_group_log_prefix}-${var.environment}-auto-scaling-group-logs"
-  retention_in_days = var.retention_days
-
-  tags = {
-    Environment = var.environment
-    Name        = "${var.environment}-auto-scaling-group-logs"
-  }
-}
-
-resource "aws_cloudwatch_log_group" "load_balancer_access_logs" {
-  name              = "${var.load_balancer_log_prefix}-${var.environment}-lb-access-logs"
-  retention_in_days = var.retention_days
-
-  tags = {
-    Environment = var.environment
-    Name        = "${var.environment}-lb-access-logs"
-  }
-}
-
-resource "aws_cloudwatch_log_group" "load_balancer_error_logs" {
-  name              = "${var.load_balancer_log_prefix}-${var.environment}-lb-error-logs"
-  retention_in_days = var.retention_days
-
-  tags = {
-    Environment = var.environment
-    Name        = "${var.environment}-lb-error-logs"
-  }
-}
-
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "${var.vpc_log_prefix}-${var.environment}-vpc-flow-logs"
   retention_in_days = var.retention_days
