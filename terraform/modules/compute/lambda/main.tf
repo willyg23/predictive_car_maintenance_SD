@@ -13,7 +13,7 @@ resource "aws_lambda_function" "api_lambda" {
 
   environment {
     variables = {
-      DB_USERNAME = var.db_username
+      DB_USERNAME = var.DB_USERNAME
       DB_PASSWORD = var.DB_PASSWORD
     }
   }

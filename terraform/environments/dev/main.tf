@@ -31,19 +31,20 @@ module "ecr" {
 # }
 
 module "api_gateway" {
-  source      = "../../modules/api_gateway"
-  environment = "dev"
-  vpc_id      = module.networking.vpc_main_id
-  lambda_invoke_arn = module.lambda.invoke_arn
+  source               = "../../modules/api_gateway"
+  environment          = "dev"
+  vpc_id               = module.networking.vpc_main_id
+  lambda_invoke_arn    = module.lambda.invoke_arn
   lambda_function_name = module.lambda.lambda_function_name
 }
 
 module "database" {
-  source      = "../../modules/database"
-  environment = "dev"
+  source                = "../../modules/database"
+  environment           = "dev"
   rds_subnet_group_name = module.networking.rds_subnet_group_name
   rds_security_group_id = module.networking.rds_security_group_id
-  DB_PASSWORD = "" # change to OS
+  DB_PASSWORD           = var.DB_PASSWORD
+  DB_USERNAME           = var.DB_USERNAME
 
 }
 
@@ -61,7 +62,8 @@ module "security_groups" {
 module "lambda" {
   source                       = "../../modules/compute/lambda"
   environment                  = "dev"
-  DB_PASSWORD                  = "" # change to OS
+  DB_PASSWORD                  = var.DB_PASSWORD
+  DB_USERNAME                  = var.DB_USERNAME
   repository_registry_id       = module.ecr.repository_registry_id
   repository_arn               = module.ecr.repository_arn
   repository_name              = module.ecr.repository_name

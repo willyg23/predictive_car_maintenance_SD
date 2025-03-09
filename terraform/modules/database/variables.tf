@@ -9,10 +9,10 @@ variable "DB_PASSWORD" {
   sensitive   = true
 }
 
-variable "db_username" {
+variable "DB_USERNAME" {
   description = "The username for the RDS database instance."
   type        = string
-  default     = "dbuser"
+  sensitive   = true
 }
 
 variable "db_allocated_storage" {
