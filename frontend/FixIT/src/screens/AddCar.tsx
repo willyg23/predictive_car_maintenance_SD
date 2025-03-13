@@ -1,9 +1,12 @@
+import { NavigationProp, useNavigation, useRoute } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useState } from "react";
-import { StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
-import { GestureHandlerRootView, ScrollView } from "react-native-gesture-handler";
+import { Button, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { GestureHandlerRootView, Pressable, ScrollView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { RootStackParamList } from "../App";
 
-
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const AddCar = () => {
     const [year, setYear] = useState('');
@@ -11,7 +14,14 @@ export const AddCar = () => {
     const [model, setModel] = useState('');
     const [nickname, setNickname] = useState('');
     const [mileage, setMileage] = useState('');
-  
+    const navigation = useNavigation<NavigationProp>();
+    const route = useRoute();
+    
+    const saveToDB = () => {
+      // call APi to save data 
+
+      navigation.navigate('HomeScreen')
+    }
     return (
       <SafeAreaView style={styles.container}>
          {/* Header */}
@@ -23,8 +33,7 @@ export const AddCar = () => {
                         <Text style={styles.logo}>🚗 FixIT</Text>
                     </View>
                     <TouchableOpacity style={styles.saveButton}>
-                        
-                        <Text style={styles.saveText}>Save</Text>
+                        <Button title='save' onPress={saveToDB}/>
                     </TouchableOpacity>
                 </View>
                     
@@ -202,7 +211,7 @@ export const AddCar = () => {
       alignItems: 'center',
       backgroundColor: '#4CD964',
       paddingHorizontal: 16,
-      paddingVertical: 8,
+      paddingVertical:1,
       borderRadius: 8,
     },
     saveText: {
