@@ -43,7 +43,7 @@ variable "lambda_memory_size" {
 variable "lambda_timeout" {
   description = "The timeout (in seconds) for the Lambda function"
   type        = number
-  default     = 10
+  default     = 180
 }
 
 variable "DB_PASSWORD" {
