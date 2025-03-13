@@ -42,6 +42,13 @@ resource "aws_apigatewayv2_route" "health_check" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
+# route for creating db schema
+resource "aws_apigatewayv2_route" "create_db_schema" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /create_db_schema"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
 resource "aws_lambda_permission" "api_gateway_lambda" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"

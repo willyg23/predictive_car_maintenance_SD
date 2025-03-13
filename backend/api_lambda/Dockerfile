@@ -5,7 +5,7 @@ COPY requirements.txt ${LAMBDA_TASK_ROOT}/
 RUN pip install -r ${LAMBDA_TASK_ROOT}/requirements.txt
 
 # Copy function code to the correct location
-COPY routes.py ${LAMBDA_TASK_ROOT}/
+COPY code_and_requirements/* ${LAMBDA_TASK_ROOT}/
 
 # Command can be passed to the runtime
 CMD [ "routes.lambda_handler" ]
