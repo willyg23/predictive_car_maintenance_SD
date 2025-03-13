@@ -58,6 +58,11 @@ variable "DB_USERNAME" {
   sensitive   = true
 }
 
+variable "ENVIRONMENT" {
+  description = "dev or prod. used in the lambda, so that backend routes can adapt to be for dev or prod"
+  type        = string
+}
+
 variable "vpc_private_subnet_ids" {
   description = "List of VPC private subnet IDs for Lambda function"
   type        = list(string)
