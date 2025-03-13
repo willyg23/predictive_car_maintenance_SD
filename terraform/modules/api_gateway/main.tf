@@ -32,7 +32,7 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   integration_type       = "AWS_PROXY"
   integration_uri        = var.lambda_invoke_arn
   integration_method     = "POST" # always POST for Lambda proxy integrations
-  payload_format_version = "2.0"  # use 2.0 for HTTP APIs
+  payload_format_version = "1.0"  # use 1.0 for the aws-wsgi library
 }
 
 # route for health check
@@ -47,5 +47,5 @@ resource "aws_lambda_permission" "api_gateway_lambda" {
   action        = "lambda:InvokeFunction"
   function_name = var.lambda_function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*/health"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
 }
