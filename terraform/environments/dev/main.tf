@@ -65,6 +65,7 @@ module "lambda" {
   environment                  = "dev"
   DB_PASSWORD                  = var.DB_PASSWORD
   DB_USERNAME                  = var.DB_USERNAME
+  ENVIRONMENT                  = var.ENVIRONMENT
   repository_registry_id       = module.ecr.repository_registry_id
   repository_arn               = module.ecr.repository_arn
   repository_name              = module.ecr.repository_name
