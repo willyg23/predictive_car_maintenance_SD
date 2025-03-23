@@ -21,7 +21,7 @@ logger.setLevel(logging.INFO)
 # Database configuration
 DB_HOST = "terraform-20250323164944761200000005.cnqq0meu6lwj.us-east-2.rds.amazonaws.com" # can change if the database is destroyed and re-deployed
 DB_NAME = "dev_db"
-DB_USER = os.environ.get('DB_USER')
+DB_USER = os.environ.get('DB_USERNAME')
 DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_PORT = 5432
 
@@ -94,8 +94,6 @@ def health_check():
 @app.route(f"/{ENV}/create_db_schema", methods=['POST'])
 def db_create_schema():
     logger.info("Create schema endpoint accessed")
-    logger.info(f"DB username env variable: {DB_USER}")
-    logger.info(f"DB password env variable: {DB_PASSWORD}")
     try:
         create_schema()
         return jsonify({"status": "success", "message": "Database schema created"})
