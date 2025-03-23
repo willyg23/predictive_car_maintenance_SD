@@ -14,6 +14,7 @@ terraform.rc
 crash.log
 crash.*.log
 .DS_Store
+.terraform.lock.hcl
 
 # Specifically ignore provider files
 **/.terraform/providers/registry.terraform.io/hashicorp/aws/**

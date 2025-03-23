@@ -19,13 +19,29 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # Database configuration
-DB_HOST = "dev-senior-design-database.cnqq0meu6lwj.us-east-2.rds.amazonaws.com"
-DB_NAME = "postgres"
+DB_HOST = "terraform-20250323164944761200000005.cnqq0meu6lwj.us-east-2.rds.amazonaws.com" # can change if the database is destroyed and re-deployed
+DB_NAME = "dev_db"
 DB_USER = os.environ.get('DB_USER')
 DB_PASSWORD = os.environ.get('DB_PASSWORD')
 DB_PORT = 5432
 
 app = Flask(__name__)
+
+def lambda_handler(event, context):
+    logger.info(f"Received event: {json.dumps(event)}")
+    try:
+        logger.info("Attempting to process with awsgi")
+        response = awsgi.response(app, event, context)
+        logger.info(f"AWSGI response: {json.dumps(response)}")
+        return response
+    except Exception as e:
+        logger.error(f"Error in lambda_handler: {str(e)}")
+        logger.error(traceback.format_exc())
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e)}),
+            "headers": {"Content-Type": "application/json"}
+        }
 
 def get_db_connection():
     """Establish and return a connection to the database."""
@@ -65,22 +81,6 @@ def create_schema():
         if conn:
             conn.close()
 
-def lambda_handler(event, context):
-    logger.info(f"Received event: {json.dumps(event)}")
-    try:
-        logger.info("Attempting to process with awsgi")
-        response = awsgi.response(app, event, context)
-        logger.info(f"AWSGI response: {json.dumps(response)}")
-        return response
-    except Exception as e:
-        logger.error(f"Error in lambda_handler: {str(e)}")
-        logger.error(traceback.format_exc())
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": str(e)}),
-            "headers": {"Content-Type": "application/json"}
-        }
-
 @app.route(f"/{ENV}/")
 def hello_world():
     logger.info("Default route accessed")
@@ -94,6 +94,8 @@ def health_check():
 @app.route(f"/{ENV}/create_db_schema", methods=['POST'])
 def db_create_schema():
     logger.info("Create schema endpoint accessed")
+    logger.info(f"DB username env variable: {DB_USER}")
+    logger.info(f"DB password env variable: {DB_PASSWORD}")
     try:
         create_schema()
         return jsonify({"status": "success", "message": "Database schema created"})

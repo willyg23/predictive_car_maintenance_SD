@@ -10,4 +10,9 @@ resource "aws_db_instance" "database" {
   skip_final_snapshot    = true
   db_subnet_group_name   = var.rds_subnet_group_name
   vpc_security_group_ids = [var.rds_security_group_id]
+
+  tags = {
+    Name        = "${var.environment}-rds-instance"
+    Environment = var.environment
+  }
 }
