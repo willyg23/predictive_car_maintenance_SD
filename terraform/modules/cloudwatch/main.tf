@@ -48,7 +48,8 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
   }
 }
 
-
+# apparently HTTP apis do not have execution logging. https://stackoverflow.com/questions/62534433/how-to-enable-execution-logs-for-a-http-api-gateway
+# as of rn i'm using an HTTP api so ig that this is kinda useless but ima keep it cause it might be useful later. like if we ever use a REST api instead.
 resource "aws_cloudwatch_log_group" "api_gateway_execution_logs" {
   name              = "${var.api_log_prefix}-${var.environment}-api-execution-logs"
   retention_in_days = var.retention_days
