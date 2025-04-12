@@ -20,9 +20,9 @@ resource "aws_apigatewayv2_stage" "main" {
     # INFO == logs all events
     # you should have it as INFO, there's basically no reason to not log all events
 
-    # Optional throttling settings
-    # throttling_burst_limit = 100
-    # throttling_rate_limit  = 50
+    # NOT optional throttling settings. if you don't set these, they default to 0, and thus no one can ever (including you and your own team) make a call to your api :(
+    throttling_burst_limit = 200
+    throttling_rate_limit  = 100
   }
 
   access_log_settings {
