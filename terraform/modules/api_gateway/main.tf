@@ -10,6 +10,21 @@ resource "aws_apigatewayv2_stage" "main" {
   name        = var.environment
   auto_deploy = true
 
+  default_route_settings {
+    detailed_metrics_enabled = true
+    logging_level            = "INFO"
+    # ^ logging_level is important as it shows execution logging, the internal processing steps, of the API gateway. which makes it easier to debug compplicated stuff.
+    # Can be "OFF", "ERROR", or "INFO"
+    # OFF == disables execution logging
+    # ERROR == only logs errors
+    # INFO == logs all events
+    # you should have it as INFO, there's basically no reason to not log all events
+
+    # Optional throttling settings
+    # throttling_burst_limit = 100
+    # throttling_rate_limit  = 50
+  }
+
   access_log_settings {
     destination_arn = var.cloudwatch_log_group_arn
     format = jsonencode({

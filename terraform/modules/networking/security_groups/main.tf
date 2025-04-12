@@ -18,7 +18,7 @@ resource "aws_security_group_rule" "lambda_rule_allow_lambda_to_connect_to_db" {
   protocol                 = "tcp"
   description              = "Rule to allow connections to RDS database from any Lambda function this security group is attached to."
   security_group_id        = aws_security_group.api_lambda_security_group.id
-  source_security_group_id = aws_security_group.rds_security_group.id  # attaches the security group rule to the security group
+  source_security_group_id = aws_security_group.rds_security_group.id # attaches the security group rule to the security group
 }
 
 

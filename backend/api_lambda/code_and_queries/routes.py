@@ -45,6 +45,8 @@ def lambda_handler(event, context):
 
 def get_db_connection():
     """Establish and return a connection to the database."""
+    logger.info(f"Attempting to connect to DB at {DB_HOST}:{DB_PORT}")
+    logger.info(f"DB_NAME: {DB_NAME}, DB_USER: {DB_USER}")
     try:
         conn = psycopg2.connect(
             host=DB_HOST,
@@ -94,6 +96,8 @@ def health_check():
 @app.route(f"/{ENV}/create_db_schema", methods=['POST'])
 def db_create_schema():
     logger.info("Create schema endpoint accessed")
+    logger.info(f"DB username env variable: {DB_USER}")
+    logger.info(f"DB password env variable: {DB_PASSWORD}")
     try:
         create_schema()
         return jsonify({"status": "success", "message": "Database schema created"})
