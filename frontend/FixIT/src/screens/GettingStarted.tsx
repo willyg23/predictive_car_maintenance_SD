@@ -57,6 +57,8 @@ const GettingStarted = ({ navigation }: Props) => {
         ]).start(() => {
             // Navigate after car drives away
             navigation.navigate('HomeScreen')
+            // navigation.navigate('TapToScan')
+            
         });
     };
 

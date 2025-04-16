@@ -24,6 +24,7 @@ import CarData from './screens/CarData';
 import HomeScreen from './screens/HomeScreen';
 import MaintenanceScreen from './screens/MaintenanceScreen';
 import PremiumScreen from './screens/PremiumScreen';
+import { TapToScan } from './screens/TapToScan';
 import { AddCar } from './screens/AddCar';
 
 export type RootStackParamList = {
@@ -52,6 +53,7 @@ function App(): React.JSX.Element {
           <Stack.Screen name='Maintenance' component={MaintenanceScreen} options={{headerShown:false}}/>
           <Stack.Screen name='Premium' component={PremiumScreen} options={{headerShown:false}}/>
           <Stack.Screen name='AddCar' component={AddCar} options={{headerShown:false}}/>
+          <Stack.Screen name='TapToScan' component={TapToScan} options={{headerShown:false}}/>
           
           {/* <Stack.Screen name='Login' component={Login}/>
           <Stack.Screen name='SignIn' component={SignIn}/> */}
