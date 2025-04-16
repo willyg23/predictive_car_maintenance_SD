@@ -5,7 +5,18 @@ import { RootStackParamList } from '../App';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const NavigationBar = () => {
+
+interface NavigationBarProps {
+    fixedJsonObject?: {
+      dtcs: string[];
+      coolant_temp_c: string | number;
+      check_engine_light: boolean | string;
+    };
+  }
+  
+
+
+const NavigationBar : React.FC<NavigationBarProps> = ({ fixedJsonObject })  => {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute();
 
@@ -21,7 +32,7 @@ const NavigationBar = () => {
                 emoji="🔧"
                 text="Maintenance" 
                 active={route.name === 'Maintenance'}
-                onPress={() => navigation.navigate('Maintenance')}
+                onPress={() => navigation.navigate('Maintenance', { fixedJsonObject })}
             />
             <NavItem 
                 emoji="🛡️"

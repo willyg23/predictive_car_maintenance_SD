@@ -1,5 +1,5 @@
 import { StyleSheet, View, Text, Pressable, Animated, ScrollView } from "react-native";
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Header from "../components/Header";
 import ScanButton from "../components/ScanButton";
 import FeatureGrid from "../components/FeatureGrid";
@@ -10,6 +10,19 @@ import SetupBanner from "../components/SetupBanner";
 const HomeScreen = () => {
     const [activeTab, setActiveTab] = useState('stats');
     const pulseAnim = useRef(new Animated.Value(1)).current;
+
+
+    const fixStr = '{"dtcs":["P0100"],"coolant_temp_c":116,"check_engine_light":true}';
+    
+
+    // This is a fixed json string that will be recieved from the machine 
+    const [fixedJsonObject, setFixedJsonObject] = useState({
+        dtcs: [],
+        coolant_temp_c: "",
+        check_engine_light: "",
+      });
+  
+
 
     const startPulse = () => {
         Animated.sequence([
@@ -25,6 +38,18 @@ const HomeScreen = () => {
             }),
         ]).start();
     };
+
+
+    const setCodes = (str:string) => {
+        const parsedObject = JSON.parse(str);
+        setFixedJsonObject(parsedObject); // Update state with parsed object
+    } 
+
+    useEffect(() => {
+        // getPerplexityResponse();
+        setCodes(fixStr)
+        console.log("hey")
+    }, [])
 
     return (
         <View style={styles.container}>
@@ -59,9 +84,9 @@ const HomeScreen = () => {
                         <Animated.View style={[styles.statContent, { transform: [{ scale: pulseAnim }] }]}>
                             <View style={styles.statHeader}>
                                 <Text style={styles.statEmoji}>🌡️</Text>
-                                <Text style={styles.statTrend}>↗️ 2°</Text>
+                                {/* <Text style={styles.statTrend}>↗️ 2°</Text> */}
                             </View>
-                            <Text style={styles.statValue}>194°F</Text>
+                            <Text style={styles.statValue}>{fixedJsonObject.coolant_temp_c}°F</Text>
                             <Text style={styles.statLabel}>Engine Temp</Text>
                             <View style={styles.statIndicator}>
                                 <View style={styles.indicatorDot} />
@@ -74,7 +99,7 @@ const HomeScreen = () => {
                         <View style={styles.statContent}>
                             <View style={styles.statHeader}>
                                 <Text style={styles.statEmoji}>⚡</Text>
-                                <Text style={styles.statTrend}>↘️ 0.3V</Text>
+                                {/* <Text style={styles.statTrend}>↘️ 0.3V</Text> */}
                             </View>
                             <Text style={styles.statValue}>11.9V</Text>
                             <Text style={styles.statLabel}>Battery</Text>
@@ -87,13 +112,13 @@ const HomeScreen = () => {
                 </View>
 
                 {/* Interactive Scan Area */}
-                <View style={styles.scanContainer}>
+                {/* <View style={styles.scanContainer}>
                     <ScanButton />
                     <View style={styles.scanInfo}>
                         <Text style={styles.scanHint}>Tap to scan your vehicle</Text>
                         <Text style={styles.scanStreak}>🔥 3 day streak!</Text>
                     </View>
-                </View>
+                </View> */}
 
                 {/* Quick Actions with Categories */}
                 <View style={styles.quickActions}>
@@ -127,7 +152,8 @@ const HomeScreen = () => {
                     </Pressable>
                 </View>
             </ScrollView>
-            <NavigationBar />
+            {/* fixedJsonObject */}
+            <NavigationBar  fixedJsonObject={fixedJsonObject}/>
         </View>
     );
 };
