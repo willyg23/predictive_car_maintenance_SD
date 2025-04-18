@@ -13,7 +13,7 @@ const char* ssid = "WiFi_OBDII";
 #define SERVICE_UUID           "12345678-1234-1234-1234-123456789abc"
 #define CHARACTERISTIC_UUID    "87654321-4321-4321-4321-cba987654321"
 
-// IP of ELM327 WiFi dongle
+// IP address of ELM327 dongle
 IPAddress server(192, 168, 0, 10);
 WiFiClient client;
 ELM327 myELM327;
@@ -21,7 +21,7 @@ ELM327 myELM327;
 BLEServer* bleServer = nullptr;
 BLECharacteristic* dtcCharacteristic = nullptr;
 
-// ========== BLE Setup ========== //
+// ===== BLE Setup =====
 void setupBLE() {
     BLEDevice::init("ESP32-DTC");
     bleServer = BLEDevice::createServer();
@@ -35,11 +35,11 @@ void setupBLE() {
 
     dtcCharacteristic->addDescriptor(new BLE2902());
     service->start();
-
     bleServer->getAdvertising()->start();
     Serial.println("BLE service started");
 }
 
+// ===== Send BLE Packet =====
 void sendDTCDataBLE(const String& dtcData) {
     if (dtcCharacteristic) {
         dtcCharacteristic->setValue(dtcData.c_str());
@@ -48,7 +48,7 @@ void sendDTCDataBLE(const String& dtcData) {
     }
 }
 
-// ========== Coolant Temp Reader ========== //
+// ===== Coolant Temp Reader =====
 float getCoolantTemp() {
     int8_t status = myELM327.sendCommand_Blocking("0105");
     if (status == ELM_SUCCESS) {
@@ -65,7 +65,7 @@ float getCoolantTemp() {
     return -999.0;
 }
 
-// ========== Setup ========== //
+// ===== Setup =====
 void setup() {
     Serial.begin(115200);
 
@@ -98,14 +98,13 @@ void setup() {
     setupBLE();
 }
 
-// ========== Loop ========== //
+// ===== Main Loop =====
 void loop() {
     JsonDocument doc;
-    JsonArray dtcs = doc["dtcs"].to<JsonArray>();  // no deprecation warning
+    JsonArray dtcs = doc["dtcs"].to<JsonArray>();
     bool checkEngineLightOn = false;
 
     myELM327.currentDTCCodes(true);
-    Serial.println("Raw DTC response payload:");
     Serial.println(myELM327.payload);
     Serial.print("codesFound = ");
     Serial.println(myELM327.DTC_Response.codesFound);
@@ -113,39 +112,42 @@ void loop() {
     if (myELM327.nb_rx_state == ELM_SUCCESS) {
         for (int i = 0; i < myELM327.DTC_Response.codesFound; i++) {
             String dtc = myELM327.DTC_Response.codes[i];
-            Serial.println("Raw DTC: " + dtc);
 
-            // Filter out invalid DTCs
-            if (dtc.length() != 5 || !dtc.startsWith("P")) {
-                Serial.println("Skipping invalid DTC: " + dtc);
-                continue;
-            }
+            if (dtc.length() == 5 &&
+                (dtc.startsWith("P") || dtc.startsWith("C") || dtc.startsWith("B") || dtc.startsWith("U"))) {
+                bool valid = true;
+                for (int j = 1; j < 5; j++) {
+                    if (!isHexadecimalDigit(dtc[j])) {
+                        valid = false;
+                        break;
+                    }
+                }
 
-            bool valid = true;
-            for (int j = 1; j < 5; j++) {
-                if (!isHexadecimalDigit(dtc[j])) valid = false;
-            }
-
-            if (valid) {
-                dtcs.add(dtc);
-                Serial.println("Valid DTC added: " + dtc);
-                checkEngineLightOn = true;
-            } else {
-                Serial.println("Rejected due to non-hex characters: " + dtc);
+                if (valid) {
+                    dtcs.add(dtc);
+                    checkEngineLightOn = true;
+                }
             }
         }
     } else if (myELM327.nb_rx_state != ELM_GETTING_MSG) {
         myELM327.printError();
     }
 
-    // Add coolant temp
+    // Coolant temp
     float coolant = getCoolantTemp();
     doc["coolant_temp_c"] = coolant;
 
-    // Add CEL status
+    // MIL light
     doc["check_engine_light"] = checkEngineLightOn;
 
-    // Send JSON via BLE
+    // VIN
+    char vinBuffer[18] = {0};
+    int8_t vinStatus = myELM327.get_vin_blocking(vinBuffer);
+    String vin = String(vinBuffer);
+    if (vin.length() < 5) vin = "EMULATOR";
+    doc["vin"] = vin;
+
+    // Send BLE
     String output;
     serializeJson(doc, output);
     sendDTCDataBLE(output);
