@@ -26,3 +26,4 @@ terraform/global/iam/terraform_state/.terraform/providers/registry.terraform.io/
 !terraform.tfvars.example
 !example.tfvars
 
+.DS_Store
