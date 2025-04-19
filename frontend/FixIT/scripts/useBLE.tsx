@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PermissionsAndroid, Platform } from 'react-native';
 import { BleManager, Device } from 'react-native-ble-plx';
 
 const ESP32_SERVICE_UUID = '12345678-1234-1234-1234-123456789abc'; //  ESP32 Service UUID
@@ -6,23 +7,50 @@ const DTC_CHARACTERISTIC_UUID = '87654321-4321-4321-4321-cba987654321'; //  ESP3
 
 const bleManager = new BleManager();
 
+const requestBluetoothPermissions = async () => {
+  if (Platform.OS === 'android' && Platform.Version >= 23) {
+    const granted = await PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    ]);
+
+    return Object.values(granted).every(result => result === PermissionsAndroid.RESULTS.GRANTED);
+  }
+  return true;
+};
+
 function useBLE() {
   const [allDevices, setAllDevices] = useState<Device[]>([]);
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [obdData, setObdData] = useState<string[]>([]);
+  const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [scanAttempted, setScanAttempted] = useState<boolean>(false);
 
   const isDuplicateDevice = (devices: Device[], nextDevice: Device) => {
     return devices.findIndex(device => device.id === nextDevice.id) > -1;
   };
 
-  const scanForPeripherals = () => {
+  const scanForPeripherals = async () => {
+    const hasPermission = await requestBluetoothPermissions();
+    if (!hasPermission) {
+      console.warn("Bluetooth permissions not granted.");
+      return;
+    }
+    
+    // Clear previous devices when starting a new scan
+    setAllDevices([]);
+    setIsScanning(true);
+    setScanAttempted(true);
+  
     bleManager.startDeviceScan(null, null, (error, device) => {
       if (error) {
         console.error('Error scanning for peripherals:', error);
+        setIsScanning(false);
         return;
       }
       if (device?.name) {
-        console.log('Found device:', device.name); // Log all discovered devices
+        console.log('Found device:', device.name);
       }
       if (device && device.name === 'ESP32-DTC') {
         if (!isDuplicateDevice(allDevices, device)) {
@@ -31,10 +59,25 @@ function useBLE() {
         }
       }
     });
+    
+    // Stop scan after 10 seconds
+    setTimeout(() => {
+      stopScan();
+    }, 10000);
+  };
+  
+  const stopScan = () => {
+    bleManager.stopDeviceScan();
+    setIsScanning(false);
   };
 
   const connectToDevice = async (device: Device) => {
     try {
+      // Stop scanning if it's still active
+      if (isScanning) {
+        stopScan();
+      }
+      
       const deviceConnection = await bleManager.connectToDevice(device.id);
       setConnectedDevice(deviceConnection);
       console.log(`Connected to ${device.name}`);
@@ -74,11 +117,14 @@ function useBLE() {
 
   return {
     scanForPeripherals,
+    stopScan,
     connectToDevice,
     disconnectFromDevice,
     allDevices,
     connectedDevice,
     obdData,
+    isScanning,
+    scanAttempted,
   };
 }
 
