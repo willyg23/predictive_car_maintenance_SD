@@ -14,7 +14,7 @@ interface BLEContextType {
   // Original BLE data
   scanForPeripherals: () => Promise<void>;
   stopScan: () => void;
-  connectToDevice: (device: Device, customJson?: string) => Promise<void>;
+  connectToDevice: (device: Device, customJson?: string) => Promise<Device>;
   disconnectFromDevice: () => void;
   allDevices: Device[];
   connectedDevice: Device | null;
@@ -24,9 +24,12 @@ interface BLEContextType {
   
   // Test mode properties
   enableTestMode: () => Device;
-  connectToTestDevice: (customJson?: string) => Promise<void>;
+  connectToTestDevice: (customJson?: string) => Promise<Device>;
   testMode: boolean;
   disableTestMode: () => void;
+  
+  // Permission status
+  permissionError: string | null;
   
   // Parsed data for UI
   parsedData: ParsedOBDData | null;

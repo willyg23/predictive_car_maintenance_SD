@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { SafeAreaView, StyleSheet, Text, View, Animated, Pressable, ScrollView, ActivityIndicator, Dimensions, TextInput, Modal, Switch } from "react-native";
+import { SafeAreaView, StyleSheet, Text, View, Animated, Pressable, ScrollView, ActivityIndicator, Dimensions, TextInput, Modal, Switch, Platform } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import { useBLEContext } from "../../scripts/BLEContext";
 import { Device } from "react-native-ble-plx";
@@ -19,6 +19,7 @@ export const TapToScan = () => {
         connectToTestDevice,
         testMode,
         disableTestMode,
+        permissionError,
     } = useBLEContext();
 
     const [jsonInputVisible, setJsonInputVisible] = useState(false);
@@ -26,6 +27,8 @@ export const TapToScan = () => {
     const [jsonError, setJsonError] = useState('');
     const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
     const [virtualModeActive, setVirtualModeActive] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState<string | null>(null);
+    const [connectionStatusVisible, setConnectionStatusVisible] = useState(false);
 
     const pulseAnim = useRef(new Animated.Value(1)).current;
     const loadingScale = useRef(new Animated.Value(0)).current;
@@ -297,6 +300,53 @@ export const TapToScan = () => {
       </View>
     );
 
+    // Handle real device connection with connection status
+    const handleRealDeviceConnect = (device: Device) => {
+      setConnectionStatus("Connecting to ESP32...");
+      setConnectionStatusVisible(true);
+      
+      // Start a timeout to hide the status after 3 seconds if no connection is made
+      const timeoutId = setTimeout(() => {
+        if (!connectedDevice) {
+          setConnectionStatus("Connection failed. Try again or check device.");
+        }
+      }, 3000);
+      
+      // Try to connect
+      connectToDevice(device)
+        .then(() => {
+          setConnectionStatus("Connected successfully!");
+          // Keep the success message visible briefly before hiding
+          setTimeout(() => {
+            setConnectionStatusVisible(false);
+          }, 2000);
+        })
+        .catch(error => {
+          setConnectionStatus(`Connection failed: ${error.message || "Unknown error"}`);
+          // Keep error message visible longer
+          setTimeout(() => {
+            setConnectionStatusVisible(false);
+          }, 4000);
+        });
+        
+      return () => clearTimeout(timeoutId);
+    };
+
+    // Update connection status based on connection state changes
+    useEffect(() => {
+      if (connectedDevice && !virtualModeActive) {
+        setConnectionStatus("Connected successfully!");
+        setConnectionStatusVisible(true);
+        
+        // Hide the status after 2 seconds
+        const timeout = setTimeout(() => {
+          setConnectionStatusVisible(false);
+        }, 2000);
+        
+        return () => clearTimeout(timeout);
+      }
+    }, [connectedDevice, virtualModeActive]);
+
     return(
         <SafeAreaView style={styles.container}>
           <View style={styles.screenWrapper}>
@@ -304,6 +354,34 @@ export const TapToScan = () => {
             
             {/* Mode Switcher */}
             {!connectedDevice && !isScanning && <ModeSwitcher />}
+            
+            {/* Permission Error Display */}
+            {permissionError && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorIcon}>⚠️</Text>
+                <Text style={styles.errorText}>{permissionError}</Text>
+                {Platform.OS === 'android' && (
+                  <Text style={styles.errorHint}>
+                    You may need to enable Bluetooth and Location permissions in your device settings.
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {/* Connection Status Display */}
+            {connectionStatusVisible && connectionStatus && !isScanning && (
+              <View style={[
+                styles.statusContainer, 
+                connectionStatus.includes("failed") ? styles.statusError : 
+                connectionStatus.includes("Connecting") ? styles.statusConnecting : 
+                styles.statusSuccess
+              ]}>
+                {connectionStatus.includes("Connecting") && (
+                  <ActivityIndicator size="small" color="#FFF" style={{marginRight: 8}} />
+                )}
+                <Text style={styles.statusText}>{connectionStatus}</Text>
+              </View>
+            )}
             
             {/* JSON Input Modal */}
             <Modal
@@ -431,6 +509,27 @@ export const TapToScan = () => {
                 <Text style={styles.dataText}>
                   Connected to {virtualModeActive ? '🧪 Virtual ESP32' : connectedDevice.name}
                 </Text>
+                
+                {!virtualModeActive && (
+                  <View style={styles.connectionInfoContainer}>
+                    <Text style={styles.connectionInfoTitle}>ESP32 Connection Info:</Text>
+                    <View style={styles.connectionInfoRow}>
+                      <Text style={styles.connectionInfoLabel}>Device ID:</Text>
+                      <Text style={styles.connectionInfoValue}>{connectedDevice.id.substring(0, 12)}...</Text>
+                    </View>
+                    <View style={styles.connectionInfoRow}>
+                      <Text style={styles.connectionInfoLabel}>Signal Strength:</Text>
+                      <Text style={styles.connectionInfoValue}>
+                        {connectedDevice.rssi ? `${connectedDevice.rssi} dBm` : 'Unknown'}
+                      </Text>
+                    </View>
+                    <View style={styles.connectionInfoRow}>
+                      <Text style={styles.connectionInfoLabel}>Status:</Text>
+                      <Text style={[styles.connectionInfoValue, {color: '#4ADE80'}]}>Active</Text>
+                    </View>
+                  </View>
+                )}
+                
                 <View>
                   <Text style={styles.dataTitleText}>DTC Data:</Text>
                   {obdData.length > 0 ? (
@@ -494,7 +593,7 @@ export const TapToScan = () => {
                               if (virtualModeActive && device.id === 'test-esp32-device') {
                                 handleVirtualDeviceConnect(device);
                               } else {
-                                connectToDevice(device); 
+                                handleRealDeviceConnect(device); 
                               }
                             }}
                           >
@@ -716,11 +815,41 @@ const styles = StyleSheet.create({
       minHeight: 200,
       textAlignVertical: 'top',
     },
-    errorText: {
-      color: '#FF5F6D',
-      fontSize: 14,
-      marginTop: 8,
+    errorContainer: {
+      marginHorizontal: 20,
+      marginVertical: 10,
+      padding: 16,
+      backgroundColor: 'rgba(255, 0, 0, 0.15)',
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: '#ff3b30',
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 3,
+      elevation: 3,
+      width: '90%',
+      alignSelf: 'center',
+      maxWidth: 450,
+    },
+    errorIcon: {
+      fontSize: 24,
       marginBottom: 8,
+    },
+    errorText: {
+      color: '#ff3b30',
+      textAlign: 'center',
+      fontWeight: '600',
+      fontSize: 16,
+      marginBottom: 8,
+    },
+    errorHint: {
+      color: '#666',
+      textAlign: 'center',
+      fontSize: 14,
+      fontStyle: 'italic',
     },
     modalButtons: {
       flexDirection: 'row',
@@ -769,5 +898,63 @@ const styles = StyleSheet.create({
     },
     modeSwitch: {
       marginHorizontal: 8,
+    },
+    statusContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginHorizontal: 20,
+      marginVertical: 8,
+      padding: 12,
+      borderRadius: 12,
+      opacity: 0.9,
+      width: '90%',
+      alignSelf: 'center',
+      maxWidth: 450,
+    },
+    statusConnecting: {
+      backgroundColor: '#3498db',
+    },
+    statusSuccess: {
+      backgroundColor: '#2ecc71',
+    },
+    statusError: {
+      backgroundColor: '#e74c3c',
+    },
+    statusText: {
+      color: '#FFFFFF',
+      fontWeight: '600',
+      textAlign: 'center',
+      fontSize: 15,
+    },
+    connectionInfoContainer: {
+      backgroundColor: 'rgba(0,0,0,0.3)',
+      borderRadius: 12,
+      marginVertical: 10,
+      padding: 16,
+      width: '90%',
+      maxWidth: 450,
+      alignSelf: 'center',
+    },
+    connectionInfoTitle: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginBottom: 12,
+      textAlign: 'center',
+    },
+    connectionInfoRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginVertical: 4,
+    },
+    connectionInfoLabel: {
+      color: '#AAAAAA',
+      fontSize: 14,
+    },
+    connectionInfoValue: {
+      color: '#FFFFFF',
+      fontSize: 14,
+      fontWeight: '500',
     },
 });
