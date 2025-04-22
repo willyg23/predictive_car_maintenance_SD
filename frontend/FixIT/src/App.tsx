@@ -26,6 +26,7 @@ import MaintenanceScreen from './screens/MaintenanceScreen';
 import PremiumScreen from './screens/PremiumScreen';
 import { TapToScan } from './screens/TapToScan';
 import { AddCar } from './screens/AddCar';
+import { BLEProvider } from '../scripts/BLEContext';
 
 export type RootStackParamList = {
   GettingStarted: undefined;
@@ -36,6 +37,7 @@ export type RootStackParamList = {
   Login: undefined;
   SignIn: undefined;
   AddCar: undefined;
+  TapToScan: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -45,20 +47,22 @@ function App(): React.JSX.Element {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen name='GettingStarted' component={GettingStarted}/>
-          <Stack.Screen name='CarData' component={CarData}/>
-          <Stack.Screen name='HomeScreen' component={HomeScreen} options={{headerShown:false}}/>
-          <Stack.Screen name='Maintenance' component={MaintenanceScreen} options={{headerShown:false}}/>
-          <Stack.Screen name='Premium' component={PremiumScreen} options={{headerShown:false}}/>
-          <Stack.Screen name='AddCar' component={AddCar} options={{headerShown:false}}/>
-          <Stack.Screen name='TapToScan' component={TapToScan} options={{headerShown:false}}/>
-          
-          {/* <Stack.Screen name='Login' component={Login}/>
-          <Stack.Screen name='SignIn' component={SignIn}/> */}
-        </Stack.Navigator>
-      </NavigationContainer>
+      <BLEProvider>
+        <NavigationContainer>
+          <Stack.Navigator>
+            <Stack.Screen name='GettingStarted' component={GettingStarted}/>
+            <Stack.Screen name='CarData' component={CarData}/>
+            <Stack.Screen name='HomeScreen' component={HomeScreen} options={{headerShown:false}}/>
+            <Stack.Screen name='Maintenance' component={MaintenanceScreen} options={{headerShown:false}}/>
+            <Stack.Screen name='Premium' component={PremiumScreen} options={{headerShown:false}}/>
+            <Stack.Screen name='AddCar' component={AddCar} options={{headerShown:false}}/>
+            <Stack.Screen name='TapToScan' component={TapToScan} options={{headerShown:false}}/>
+            
+            {/* <Stack.Screen name='Login' component={Login}/>
+            <Stack.Screen name='SignIn' component={SignIn}/> */}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </BLEProvider>
     </SafeAreaView>
   );
 }
