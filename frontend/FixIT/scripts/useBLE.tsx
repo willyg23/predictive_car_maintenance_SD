@@ -168,6 +168,15 @@ function useBLE() {
       const deviceConnection = await bleManager.connectToDevice(device.id);
       setConnectedDevice(deviceConnection);
       console.log(`Connected to ${device.name}`);
+      
+      // Request a larger MTU size
+      try {
+        const newMtu = await deviceConnection.requestMTU(512);
+        console.log(`MTU size changed to: ${newMtu} bytes`);
+      } catch (mtuError) {
+        console.warn('Could not negotiate larger MTU:', mtuError);
+      }
+      
       await deviceConnection.discoverAllServicesAndCharacteristics();
       startReadingDTCFromESP32(deviceConnection);
       
@@ -386,6 +395,10 @@ function useBLE() {
     // Skip actual BLE operations if in test mode
     if (testMode) return;
     
+    // Buffer to collect chunked data
+    let dataBuffer = "";
+    const END_MARKER = "##END##";
+    
     device.monitorCharacteristicForService(
       ESP32_SERVICE_UUID,
       DTC_CHARACTERISTIC_UUID,
@@ -397,13 +410,49 @@ function useBLE() {
         if (characteristic?.value) {
           try {
             // First decode the Base64 string
-            const decodedBuffer = Buffer.from(characteristic.value, 'base64').toString('utf-8');
-            console.log('Received raw DTC Data:', decodedBuffer);
+            const decodedData = Buffer.from(characteristic.value, 'base64').toString('utf-8');
+            console.log('Received raw DTC Data:', decodedData);
             
-            // Add the decoded data to our array
-            setObdData(prev => [...prev, decodedBuffer]);
+            // Check if this is an end marker
+            if (decodedData === END_MARKER) {
+              console.log('End marker received, processing complete message');
+              
+              // Try to parse the complete buffer as JSON
+              try {
+                // Verify we have a complete, valid JSON object
+                const jsonObj = JSON.parse(dataBuffer);
+                console.log('Successfully parsed complete JSON object:', jsonObj);
+                
+                // Add the valid JSON to our data array
+                setObdData(prev => [...prev, dataBuffer]);
+              } catch (jsonError) {
+                console.error('Error parsing assembled JSON data:', jsonError, 'Buffer:', dataBuffer);
+              }
+              
+              // Reset the buffer
+              dataBuffer = "";
+              return;
+            }
+            
+            // Append to buffer
+            dataBuffer += decodedData;
+            
+            // As a fallback, try to see if the buffer already contains valid JSON
+            if (dataBuffer.startsWith('{') && dataBuffer.endsWith('}')) {
+              try {
+                // Check if we have valid JSON
+                JSON.parse(dataBuffer);
+                
+                // If we get here, it's valid JSON, so add it and reset buffer
+                console.log('Found valid JSON in buffer:', dataBuffer);
+                setObdData(prev => [...prev, dataBuffer]);
+                dataBuffer = "";
+              } catch (e) {
+                // Not valid JSON yet, continue buffering
+              }
+            }
           } catch (e) {
-            console.error('Error decoding data:', e);
+            console.error('Error processing data:', e);
           }
         }
       },
