@@ -45,6 +45,18 @@ export const BLEProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const bleHook = useBLE();
   const [parsedData, setParsedData] = useState<ParsedOBDData | null>(null);
   
+  // Clear parsed data when navigating away
+  useEffect(() => {
+    // This will run when the component is mounted
+    console.log('BLE Context mounted');
+    
+    // Return a cleanup function that will run when unmounted
+    return () => {
+      console.log('BLE Context being unmounted - clearing data');
+      setParsedData(null);
+    };
+  }, []);
+  
   // Parse BLE data when it changes
   useEffect(() => {
     if (bleHook.obdData.length > 0) {
@@ -54,7 +66,13 @@ export const BLEProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         // Handle the parsing in a safe way
         try {
-          const parsed = JSON.parse(latestData) as ParsedOBDData;
+          const parsed = JSON.parse(latestData);
+          
+          // First check if parsed is null before trying to access properties
+          if (!parsed) {
+            console.warn('Parsed OBD data is null');
+            return;
+          }
           
           // Validate required fields exist
           if (typeof parsed.coolant_temp_c !== 'number' || 
@@ -64,7 +82,7 @@ export const BLEProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             return;
           }
           
-          setParsedData(parsed);
+          setParsedData(parsed as ParsedOBDData);
           console.log('Successfully parsed OBD data:', parsed);
         } catch (error) {
           console.error('Error parsing OBD data JSON:', error);
@@ -114,6 +132,13 @@ export const BLEProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Format parsed data for display
   const getFormattedData = () => {
     if (!parsedData) return null;
+    
+    // Double check that all required properties exist
+    if (!parsedData.dtcs || typeof parsedData.coolant_temp_c !== 'number' || 
+        typeof parsedData.check_engine_light !== 'boolean') {
+      console.warn('Missing required properties in parsedData:', parsedData);
+      return null;
+    }
     
     return {
       ...parsedData,

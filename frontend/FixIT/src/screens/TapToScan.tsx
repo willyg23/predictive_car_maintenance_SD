@@ -358,7 +358,7 @@ export const TapToScan = () => {
         return <Text style={styles.dataText}>No DTCs received yet.</Text>;
       }
       
-      if (formattedData) {
+      if (formattedData && formattedData.dtcs) {
         return (
           <View style={styles.dtcDataContainer}>
             <View style={styles.dtcRow}>

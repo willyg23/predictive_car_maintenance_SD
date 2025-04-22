@@ -4,19 +4,31 @@ import NavigationBar from "../components/NavigationBar";
 import { useEffect, useState } from "react";
 import { generateResponse } from "../../scripts/generateResponse";
 import OpenAI from "openai";
-import { useRoute } from '@react-navigation/native';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Add interface for the route params type
+interface MaintenanceScreenParams {
+  fixedJsonObject?: {
+    dtcs: string[];
+    coolant_temp_c: string | number;
+    check_engine_light: string | boolean;
+  };
+}
 
-
-
+// Define the type for our state
+interface FixedJsonState {
+  dtcs: string[];
+  coolant_temp_c: string | number;
+  check_engine_light: string | boolean;
+}
 
 const MaintenanceScreen = () => {
-    const route = useRoute();
+    const route = useRoute<RouteProp<Record<string, MaintenanceScreenParams>, string>>();
     const [messages, setMessages] = useState<Array<{ text: string; reply: string | null }>>([]);
     const [inputText, setInputText] = useState(""); // State to store user input
     
-    const [fixedJsonObject, setFixedJsonObject] = useState({
+    const [fixedJsonObject, setFixedJsonObject] = useState<FixedJsonState>({
       dtcs: [],
       coolant_temp_c: "",
       check_engine_light: "",
@@ -128,10 +140,26 @@ const MaintenanceScreen = () => {
 
      
     const setCodes = (str:string) => {
-      // Attempt to parse the JSON string
-      const fixedJsonObject = route.params?.fixedJsonObject || null;
-      console.log("here is the fixedJSONObject "+JSON.stringify(fixedJsonObject))
-      setFixedJsonObject(fixedJsonObject); // Update state with parsed object
+      try {
+        // Get data from route params, with proper null checking
+        const routeData = route.params?.fixedJsonObject || null;
+        console.log("here is the fixedJSONObject " + JSON.stringify(routeData));
+        
+        // Ensure we have valid data before updating state
+        if (routeData && typeof routeData === 'object') {
+          // Validate that the required properties exist
+          const safeData: FixedJsonState = {
+            dtcs: Array.isArray(routeData.dtcs) ? routeData.dtcs : [],
+            coolant_temp_c: routeData.coolant_temp_c ?? "",
+            check_engine_light: routeData.check_engine_light ?? "",
+          };
+          setFixedJsonObject(safeData);
+        } else {
+          console.log("No valid fixedJsonObject in route params");
+        }
+      } catch (error) {
+        console.error("Error processing route params:", error);
+      }
     } 
 
     useEffect(() => {
