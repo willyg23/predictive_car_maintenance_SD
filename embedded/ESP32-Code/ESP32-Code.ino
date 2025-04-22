@@ -20,10 +20,19 @@ ELM327 myELM327;
 
 BLEServer* bleServer = nullptr;
 BLECharacteristic* dtcCharacteristic = nullptr;
+BLECharacteristic* statusCharacteristic = nullptr;
+
+// Default MTU is often around 23 bytes, we'll try to request larger
+#define MAX_MTU 512
+#define CHUNK_SIZE 20
 
 // ===== BLE Setup =====
 void setupBLE() {
     BLEDevice::init("ESP32-DTC");
+    
+    // Request a larger MTU size
+    BLEDevice::setMTU(MAX_MTU);
+    
     bleServer = BLEDevice::createServer();
 
     BLEService* service = bleServer->createService(SERVICE_UUID);
@@ -36,15 +45,57 @@ void setupBLE() {
     dtcCharacteristic->addDescriptor(new BLE2902());
     service->start();
     bleServer->getAdvertising()->start();
-    Serial.println("BLE service started");
+    Serial.println("BLE service started with requested MTU size: " + String(MAX_MTU));
 }
 
 // ===== Send BLE Packet =====
 void sendDTCDataBLE(const String& dtcData) {
     if (dtcCharacteristic) {
-        dtcCharacteristic->setValue(dtcData.c_str());
-        dtcCharacteristic->notify();
-        Serial.println("DTC Data sent via BLE: " + dtcData);
+        // Get the total length of the data
+        size_t dataLen = dtcData.length();
+        const char* dataPtr = dtcData.c_str();
+        
+        // Check if we need to chunk the data
+        if (dataLen <= CHUNK_SIZE) {
+            // Small enough to send in one packet
+            dtcCharacteristic->setValue(dataPtr);
+            dtcCharacteristic->notify();
+            Serial.println("DTC Data sent via BLE (single packet): " + dtcData);
+        } else {
+            // Need to chunk the data
+            Serial.println("Sending large DTC data in chunks: " + String(dataLen) + " bytes");
+            
+            // Send in chunks of CHUNK_SIZE bytes
+            size_t sentBytes = 0;
+            
+            while (sentBytes < dataLen) {
+                // Calculate remaining bytes and current chunk size
+                size_t remainingBytes = dataLen - sentBytes;
+                size_t currentChunkSize = (remainingBytes > CHUNK_SIZE) ? CHUNK_SIZE : remainingBytes;
+                
+                // Create a temporary buffer for this chunk
+                char chunk[CHUNK_SIZE + 1];
+                memcpy(chunk, dataPtr + sentBytes, currentChunkSize);
+                chunk[currentChunkSize] = '\0';  // Null-terminate
+                
+                // Send the chunk
+                dtcCharacteristic->setValue((uint8_t*)chunk, currentChunkSize);
+                dtcCharacteristic->notify();
+                
+                // Wait for the packet to be processed
+                delay(20);  // Small delay between chunks
+                
+                sentBytes += currentChunkSize;
+                Serial.println("Sent chunk: " + String(sentBytes) + "/" + String(dataLen));
+            }
+            
+            // Send a special end marker to indicate complete message
+            const char* endMarker = "##END##";
+            dtcCharacteristic->setValue(endMarker);
+            dtcCharacteristic->notify();
+            
+            Serial.println("Finished sending chunked data");
+        }
     }
 }
 
@@ -150,6 +201,12 @@ void loop() {
     // Send BLE
     String output;
     serializeJson(doc, output);
+    
+    // Log the size of the JSON data
+    Serial.println("JSON data size: " + String(output.length()) + " bytes");
+    Serial.println("JSON data: " + output);
+    
+    // Send the data with chunking if needed
     sendDTCDataBLE(output);
 
     delay(5000);
