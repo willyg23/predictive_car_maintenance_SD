@@ -1,7 +1,8 @@
 import React, { useRef, useEffect, useState } from "react";
-import { SafeAreaView, StyleSheet, Text, View, Animated, Pressable, ScrollView, ActivityIndicator, Dimensions } from "react-native";
+import { SafeAreaView, StyleSheet, Text, View, Animated, Pressable, ScrollView, ActivityIndicator, Dimensions, TextInput, Modal, Switch } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
-import useBLE from "../../scripts/useBLE";
+import { useBLEContext } from "../../scripts/BLEContext";
+import { Device } from "react-native-ble-plx";
 
 export const TapToScan = () => {
     const {
@@ -14,7 +15,17 @@ export const TapToScan = () => {
         obdData,
         isScanning,
         scanAttempted,
-    } = useBLE();
+        enableTestMode,
+        connectToTestDevice,
+        testMode,
+        disableTestMode,
+    } = useBLEContext();
+
+    const [jsonInputVisible, setJsonInputVisible] = useState(false);
+    const [jsonInput, setJsonInput] = useState('');
+    const [jsonError, setJsonError] = useState('');
+    const [selectedDevice, setSelectedDevice] = useState<Device | null>(null);
+    const [virtualModeActive, setVirtualModeActive] = useState(false);
 
     const pulseAnim = useRef(new Animated.Value(1)).current;
     const loadingScale = useRef(new Animated.Value(0)).current;
@@ -27,6 +38,83 @@ export const TapToScan = () => {
     
     // Use state for glow effect instead of animated value
     const [glowIntensity, setGlowIntensity] = useState(0.4);
+
+    // Default JSON data for the input
+    const defaultJsonData = JSON.stringify({
+      dtcs: ["P0100"],
+      coolant_temp_c: 85,
+      check_engine_light: true
+    }, null, 2);
+
+    // Toggle between real and virtual modes
+    const toggleVirtualMode = () => {
+      if (virtualModeActive) {
+        // Switching to real mode
+        disableTestMode();
+        setVirtualModeActive(false);
+      } else {
+        // Switching to virtual mode
+        enableTestMode();
+        setVirtualModeActive(true);
+      }
+    };
+
+    // Scan appropriate to current mode
+    const handleScan = () => {
+      startPulse();
+      if (virtualModeActive) {
+        // In virtual mode, ensure test mode is enabled
+        if (!testMode) {
+          enableTestMode();
+        }
+      } else {
+        // In real mode, ensure test mode is disabled
+        if (testMode) {
+          disableTestMode();
+        }
+      }
+      scanForPeripherals();
+    };
+
+    // Show JSON input modal when connecting to virtual device
+    const handleVirtualDeviceConnect = (device: Device) => {
+      setSelectedDevice(device);
+      setJsonInput(defaultJsonData);
+      setJsonError('');
+      setJsonInputVisible(true);
+    };
+
+    // Handle JSON submission
+    const handleJsonSubmit = () => {
+      try {
+        // Try to parse the JSON to validate it
+        const parsedJson = JSON.parse(jsonInput);
+        
+        // Check if it has the required fields
+        if (!parsedJson.dtcs || !Array.isArray(parsedJson.dtcs)) {
+          setJsonError('JSON must include a "dtcs" array');
+          return;
+        }
+        if (typeof parsedJson.coolant_temp_c !== 'number') {
+          setJsonError('JSON must include "coolant_temp_c" as a number');
+          return;
+        }
+        if (typeof parsedJson.check_engine_light !== 'boolean') {
+          setJsonError('JSON must include "check_engine_light" as a boolean');
+          return;
+        }
+        
+        // If valid, proceed with connection
+        setJsonInputVisible(false);
+        
+        // Connect with custom JSON
+        if (selectedDevice) {
+          connectToDevice(selectedDevice, jsonInput);
+        }
+      } catch (error: any) {
+        setJsonError('Invalid JSON format: ' + error.message);
+      }
+    };
 
     // Pulse animation for buttons
     const startPulse = () => {
@@ -193,10 +281,75 @@ export const TapToScan = () => {
       outputRange: [0.2, 0.2, 0.2, 1]
     });
 
+    // Mode switcher component
+    const ModeSwitcher = () => (
+      <View style={styles.modeSwitcherContainer}>
+        <Text style={[styles.modeText, !virtualModeActive && styles.activeModeText]}>Real Mode</Text>
+        <Switch
+          value={virtualModeActive}
+          onValueChange={toggleVirtualMode}
+          trackColor={{ false: '#333', true: 'rgba(106, 90, 205, 0.4)' }}
+          thumbColor={virtualModeActive ? '#6A5ACD' : '#FF5F6D'}
+          ios_backgroundColor="#333"
+          style={styles.modeSwitch}
+        />
+        <Text style={[styles.modeText, virtualModeActive && styles.activeModeText]}>Virtual Mode</Text>
+      </View>
+    );
+
     return(
         <SafeAreaView style={styles.container}>
           <View style={styles.screenWrapper}>
             <Text style={styles.dataTitleText}>BLE OBD-II Scanner</Text>
+            
+            {/* Mode Switcher */}
+            {!connectedDevice && !isScanning && <ModeSwitcher />}
+            
+            {/* JSON Input Modal */}
+            <Modal
+              animationType="slide"
+              transparent={true}
+              visible={jsonInputVisible}
+              onRequestClose={() => setJsonInputVisible(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Enter Custom JSON for Virtual ESP32</Text>
+                  <Text style={styles.modalSubtitle}>Define the data your virtual device will send</Text>
+                  
+                  <TextInput
+                    style={styles.jsonInput}
+                    multiline={true}
+                    numberOfLines={8}
+                    value={jsonInput}
+                    onChangeText={setJsonInput}
+                    placeholder="Enter JSON data here"
+                    placeholderTextColor="#666"
+                  />
+                  
+                  {jsonError ? (
+                    <Text style={styles.errorText}>{jsonError}</Text>
+                  ) : null}
+                  
+                  <View style={styles.modalButtons}>
+                    <Pressable 
+                      onPress={() => setJsonInputVisible(false)}
+                      style={[styles.modalButton, styles.modalCancelButton]}
+                    >
+                      <Text style={styles.cancelButtonText}>Cancel</Text>
+                    </Pressable>
+                    
+                    <Pressable 
+                      onPress={handleJsonSubmit}
+                      style={[styles.modalButton, { backgroundColor: '#4ADE80' }]}
+                    >
+                      <Text style={styles.submitButtonText}>Connect</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </View>
+            </Modal>
+            
             {isScanning && (
               <Animated.View 
                 style={[
@@ -231,7 +384,7 @@ export const TapToScan = () => {
                     ]}
                   >
                     <LinearGradient 
-                      colors={['#FF5F6D', '#FFC371']} 
+                      colors={virtualModeActive ? ['#6A5ACD', '#9370DB'] : ['#FF5F6D', '#FFC371']} 
                       start={{x: 0, y: 0}} 
                       end={{x: 1, y: 1}} 
                       style={styles.loadingGradient}
@@ -242,7 +395,11 @@ export const TapToScan = () => {
                     
                   <View style={styles.textAndButtonContainer}>
                     <View style={styles.loadingTextContainer}>
-                      <Text style={styles.loadingText}>Scanning for devices</Text>
+                      <Text style={styles.loadingText}>
+                        {virtualModeActive 
+                          ? "Preparing virtual environment..." 
+                          : "Scanning for real devices..."}
+                      </Text>
                       <View style={styles.dotsContainer}>
                         <Animated.Text style={[styles.loadingDot, { opacity: dotOpacity1 }]}>•</Animated.Text>
                         <Animated.Text style={[styles.loadingDot, { opacity: dotOpacity2 }]}>•</Animated.Text>
@@ -272,7 +429,7 @@ export const TapToScan = () => {
             {connectedDevice ? (
               <React.Fragment>
                 <Text style={styles.dataText}>
-                  Connected to {connectedDevice.name}
+                  Connected to {virtualModeActive ? '🧪 Virtual ESP32' : connectedDevice.name}
                 </Text>
                 <View>
                   <Text style={styles.dataTitleText}>DTC Data:</Text>
@@ -297,13 +454,24 @@ export const TapToScan = () => {
             ) : (
               <React.Fragment>
                 {!isScanning && (
-                  <Animated.View style={[styles.buttonWrapper, { transform: [{ scale: pulseAnim }] }]}>
-                    <Pressable onPress={() => { startPulse(); scanForPeripherals(); }}>
-                      <LinearGradient colors={['#FF5F6D', '#FFC371']} start={{x:0,y:0}} end={{x:1,y:0}} style={styles.buttonGradient}>
-                        <Text style={styles.buttonText}>Scan for Devices</Text>
-                      </LinearGradient>
-                    </Pressable>
-                  </Animated.View>
+                  <View style={styles.buttonContainer}>
+                    <Animated.View style={[styles.buttonWrapper, { transform: [{ scale: pulseAnim }] }]}>
+                      <Pressable onPress={handleScan}>
+                        <LinearGradient 
+                          colors={virtualModeActive ? ['#6A5ACD', '#483D8B'] : ['#FF5F6D', '#FFC371']} 
+                          start={{x:0,y:0}} 
+                          end={{x:1,y:0}} 
+                          style={styles.buttonGradient}
+                        >
+                          <Text style={styles.buttonText}>
+                            {virtualModeActive 
+                              ? "Prepare Virtual ESP32" 
+                              : "Scan for Real Devices"}
+                          </Text>
+                        </LinearGradient>
+                      </Pressable>
+                    </Animated.View>
+                  </View>
                 )}
                 {!isScanning && (
                   <ScrollView
@@ -311,17 +479,53 @@ export const TapToScan = () => {
                     contentContainerStyle={styles.deviceListContent}
                     showsVerticalScrollIndicator={false}
                   >
-                    {allDevices.map((device, index) => (
-                      <Animated.View key={index} style={[styles.buttonWrapper, { transform: [{ scale: pulseAnim }] }]}>
-                        <Pressable onPress={() => { startPulse(); connectToDevice(device); }}>
-                          <LinearGradient colors={['#FF5F6D', '#FFC371']} start={{x:0,y:0}} end={{x:1,y:0}} style={styles.buttonGradient}>
-                            <Text style={styles.buttonText}>Connect to {device.name}</Text>
-                          </LinearGradient>
-                        </Pressable>
-                      </Animated.View>
-                    ))}
-                    {(!isScanning && scanAttempted && allDevices.length === 0) && (
-                      <Text style={styles.dataText}>No devices found. Make sure the ESP32 is powered on and broadcasting.</Text>
+                    {/* Filter devices based on mode */}
+                    {allDevices
+                      .filter(device => 
+                        virtualModeActive 
+                          ? device.id === 'test-esp32-device' 
+                          : device.id !== 'test-esp32-device'
+                      )
+                      .map((device, index) => (
+                        <Animated.View key={index} style={[styles.buttonWrapper, { transform: [{ scale: pulseAnim }] }]}>
+                          <Pressable 
+                            onPress={() => { 
+                              startPulse(); 
+                              if (virtualModeActive && device.id === 'test-esp32-device') {
+                                handleVirtualDeviceConnect(device);
+                              } else {
+                                connectToDevice(device); 
+                              }
+                            }}
+                          >
+                            <LinearGradient 
+                              colors={virtualModeActive ? ['#4ADE80', '#2E8B57'] : ['#FF5F6D', '#FFC371']} 
+                              start={{x:0,y:0}} 
+                              end={{x:1,y:0}} 
+                              style={styles.buttonGradient}
+                            >
+                              <Text style={styles.buttonText}>
+                                {virtualModeActive && device.id === 'test-esp32-device' 
+                                  ? '🧪 Configure Virtual ESP32' 
+                                  : `Connect to ${device.name}`}
+                              </Text>
+                            </LinearGradient>
+                          </Pressable>
+                        </Animated.View>
+                      ))
+                    }
+                    {(!isScanning && scanAttempted && 
+                      allDevices.filter(device => 
+                        virtualModeActive 
+                          ? device.id === 'test-esp32-device' 
+                          : device.id !== 'test-esp32-device'
+                      ).length === 0
+                    ) && (
+                      <Text style={styles.dataText}>
+                        {virtualModeActive 
+                          ? "Click 'Prepare Virtual ESP32' to create a virtual device" 
+                          : "No real devices found. Make sure the ESP32 is powered on and broadcasting."}
+                      </Text>
                     )}
                   </ScrollView>
                 )}
@@ -356,6 +560,10 @@ const styles = StyleSheet.create({
       color: '#808080',
       marginTop: 8,
       textAlign: 'center',
+    },
+    buttonContainer: {
+      width: '100%',
+      gap: 12,
     },
     buttonWrapper: {
       marginTop: 16,
@@ -466,5 +674,100 @@ const styles = StyleSheet.create({
       borderWidth: 1,
       borderColor: 'rgba(255,95,109,0.4)',
       alignSelf: 'center',
+    },
+    // Modal styles
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.75)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    modalContent: {
+      backgroundColor: '#1A1A1A',
+      borderRadius: 16,
+      padding: 24,
+      width: '100%',
+      maxWidth: 500,
+      maxHeight: '80%',
+    },
+    modalTitle: {
+      color: '#FFFFFF',
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    modalSubtitle: {
+      color: '#808080',
+      fontSize: 14,
+      marginBottom: 16,
+      textAlign: 'center',
+    },
+    jsonInput: {
+      backgroundColor: '#0D0D0D',
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: '#333',
+      color: '#00FF00',
+      fontFamily: 'monospace',
+      fontSize: 14,
+      padding: 12,
+      minHeight: 200,
+      textAlignVertical: 'top',
+    },
+    errorText: {
+      color: '#FF5F6D',
+      fontSize: 14,
+      marginTop: 8,
+      marginBottom: 8,
+    },
+    modalButtons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 16,
+    },
+    modalButton: {
+      flex: 1,
+      borderRadius: 12,
+      padding: 12,
+      alignItems: 'center',
+      justifyContent: 'center',
+      margin: 8,
+    },
+    modalCancelButton: {
+      backgroundColor: '#333',
+    },
+    cancelButtonText: {
+      color: '#CCC',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    submitButtonText: {
+      color: '#FFF',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    // Mode switcher styles
+    modeSwitcherContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#1A1A1A',
+      borderRadius: 24,
+      padding: 8,
+      marginBottom: 16,
+    },
+    modeText: {
+      color: '#808080',
+      fontSize: 16,
+      fontWeight: '600',
+      paddingHorizontal: 12,
+    },
+    activeModeText: {
+      color: '#FFFFFF',
+    },
+    modeSwitch: {
+      marginHorizontal: 8,
     },
 });

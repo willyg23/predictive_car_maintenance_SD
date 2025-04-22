@@ -7,19 +7,23 @@ import NavigationBar from "../components/NavigationBar";
 import VehicleSection from "../components/VehicleSection";
 import SetupBanner from "../components/SetupBanner";
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useBLEContext, ParsedOBDData } from "../../scripts/BLEContext";
+import { RootStackParamList } from "../App";
 
 const HomeScreen = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [activeTab, setActiveTab] = useState('stats');
     const pulseAnim = useRef(new Animated.Value(1)).current;
-
-    const fixStr = '{"dtcs":["P0100"],"coolant_temp_c":116,"check_engine_light":true}';
-
-    // This is a fixed json string that will be recieved from the machine 
-    const [fixedJsonObject, setFixedJsonObject] = useState({
+    
+    // Use BLE context instead of hardcoded data
+    const { parsedData, connectedDevice } = useBLEContext();
+    
+    // Fallback data if no BLE data is available
+    const [localData, setLocalData] = useState<ParsedOBDData>({
         dtcs: [],
-        coolant_temp_c: "",
-        check_engine_light: "",
+        coolant_temp_c: 0,
+        check_engine_light: false
     });
 
     const startPulse = () => {
@@ -37,16 +41,26 @@ const HomeScreen = () => {
         ]).start();
     };
 
-    const setCodes = (str: string) => {
-        const parsedObject = JSON.parse(str);
-        setFixedJsonObject(parsedObject); // Update state with parsed object
-    }
-
+    // Update local data when parsed BLE data changes
     useEffect(() => {
-        // getPerplexityResponse();
-        setCodes(fixStr)
-        console.log("hey")
-    }, [])
+        if (parsedData) {
+            setLocalData(parsedData);
+        }
+    }, [parsedData]);
+
+    // Helper function to determine temperature status
+    const getTempStatus = (temp: number) => {
+        if (temp > 230) return { status: "Too Hot", isWarning: true };
+        if (temp < 170) return { status: "Too Cold", isWarning: true };
+        return { status: "Optimal", isWarning: false };
+    };
+
+    // Get the active data (BLE data or local fallback)
+    const activeData = parsedData || localData;
+    const tempStatus = getTempStatus(activeData.coolant_temp_c);
+    
+    // Convert Celsius to Fahrenheit for display
+    const tempF = Math.round(activeData.coolant_temp_c * 9/5 + 32);
 
     return (
         <View style={styles.container}>
@@ -74,8 +88,12 @@ const HomeScreen = () => {
 
                 {activeTab === 'setup' && (
                     <View style={styles.setupContainer}>
-                        <Text style={styles.setupHeadline}>Let’s Get Started</Text>
-                        <Text style={styles.setupSubtext}>Scan your car’s Bluetooth device to begin diagnostics.</Text>
+                        <Text style={styles.setupHeadline}>Let's Get Started</Text>
+                        <Text style={styles.setupSubtext}>
+                            {connectedDevice 
+                                ? `Connected to ${connectedDevice.name}` 
+                                : "Scan your car's Bluetooth device to begin diagnostics."}
+                        </Text>
                         <Animated.View 
                             style={[styles.startScanButton, { transform: [{ scale: pulseAnim }] }]}
                         >
@@ -91,7 +109,9 @@ const HomeScreen = () => {
                                     end={{ x: 1, y: 0 }}
                                     style={styles.startScanPressable}
                                 >
-                                    <Text style={styles.startScanText}>Start Scan</Text>
+                                    <Text style={styles.startScanText}>
+                                        {connectedDevice ? 'Manage Connection' : 'Start Scan'}
+                                    </Text>
                                 </LinearGradient>
                             </Pressable>
                         </Animated.View>
@@ -109,25 +129,54 @@ const HomeScreen = () => {
                                 <View style={styles.statHeader}>
                                     <Text style={styles.statEmoji}>🌡️</Text>
                                 </View>
-                                <Text style={styles.statValue}>{fixedJsonObject.coolant_temp_c}°F</Text>
+                                <Text style={styles.statValue}>{tempF}°F</Text>
                                 <Text style={styles.statLabel}>Engine Temp</Text>
-                                <View style={styles.statIndicator}>
-                                    <View style={styles.indicatorDot} />
-                                    <Text style={styles.statStatus}>Optimal</Text>
+                                <View style={[
+                                    styles.statIndicator, 
+                                    tempStatus.isWarning && styles.warningIndicator
+                                ]}>
+                                    <View style={[
+                                        styles.indicatorDot, 
+                                        tempStatus.isWarning && styles.warningDot
+                                    ]} />
+                                    <Text style={[
+                                        styles.statStatus, 
+                                        tempStatus.isWarning && styles.warningText
+                                    ]}>
+                                        {tempStatus.status}
+                                    </Text>
                                 </View>
                             </Animated.View>
                         </Pressable>
 
-                        <Pressable style={[styles.statCard, styles.warningCard]}>
+                        <Pressable 
+                            style={[
+                                styles.statCard, 
+                                activeData.check_engine_light && styles.warningCard
+                            ]}
+                        >
                             <View style={styles.statContent}>
                                 <View style={styles.statHeader}>
-                                    <Text style={styles.statEmoji}>⚡</Text>
+                                    <Text style={styles.statEmoji}>🔧</Text>
                                 </View>
-                                <Text style={styles.statValue}>11.9V</Text>
-                                <Text style={styles.statLabel}>Battery</Text>
-                                <View style={[styles.statIndicator, styles.warningIndicator]}>
-                                    <View style={[styles.indicatorDot, styles.warningDot]} />
-                                    <Text style={[styles.statStatus, styles.warningText]}>Check Soon</Text>
+                                <Text style={styles.statValue}>
+                                    {activeData.dtcs.length > 0 ? activeData.dtcs[0] : "None"}
+                                </Text>
+                                <Text style={styles.statLabel}>Engine Code</Text>
+                                <View style={[
+                                    styles.statIndicator, 
+                                    activeData.check_engine_light && styles.warningIndicator
+                                ]}>
+                                    <View style={[
+                                        styles.indicatorDot, 
+                                        activeData.check_engine_light && styles.warningDot
+                                    ]} />
+                                    <Text style={[
+                                        styles.statStatus, 
+                                        activeData.check_engine_light && styles.warningText
+                                    ]}>
+                                        {activeData.check_engine_light ? 'Check Engine' : 'All Good'}
+                                    </Text>
                                 </View>
                             </View>
                         </Pressable>
@@ -150,24 +199,26 @@ const HomeScreen = () => {
                 <View style={styles.recentActivity}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Activity</Text>
-                        <Text style={styles.viewAll}>View All</Text>
+                        <Text style={styles.viewAllText}>View All</Text>
                     </View>
-                    <Pressable style={styles.activityCard}>
-                        <View style={styles.activityHeader}>
-                            <Text style={styles.activityEmoji}>🔍</Text>
-                            <View style={styles.activityInfo}>
-                                <Text style={styles.activityTitle}>Diagnostic Scan</Text>
-                                <Text style={styles.activityTime}>2h ago</Text>
+                    <Pressable style={styles.activityCardStyle}>
+                        <View style={styles.activityHeaderStyle}>
+                            <Text style={styles.activityEmojiStyle}>🔍</Text>
+                            <View style={styles.activityInfoStyle}>
+                                <Text style={styles.activityTitleStyle}>Diagnostic Scan</Text>
+                                <Text style={styles.activityTimeStyle}>2h ago</Text>
                             </View>
-                            <View style={styles.activityBadge}>
-                                <Text style={styles.badgeText}>All Good</Text>
+                            <View style={styles.activityBadgeStyle}>
+                                <Text style={styles.badgeTextStyle}>
+                                    {activeData.check_engine_light ? 'Issues Found' : 'All Good'}
+                                </Text>
                             </View>
                         </View>
                     </Pressable>
                 </View>
             </ScrollView>
-            {/* fixedJsonObject */}
-            <NavigationBar fixedJsonObject={fixedJsonObject} />
+            {/* Pass the active data to NavigationBar */}
+            <NavigationBar fixedJsonObject={activeData} />
         </View>
     );
 };
@@ -341,6 +392,48 @@ const styles = StyleSheet.create({
     recentActivity: {
         gap: 12,
     },
+    // Fixed missing style definitions
+    viewAllText: {
+        color: '#808080',
+        fontSize: 14,
+    },
+    activityCardStyle: {
+        backgroundColor: '#1A1A1A',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+    },
+    activityHeaderStyle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    activityEmojiStyle: {
+        fontSize: 24,
+        marginRight: 12,
+    },
+    activityInfoStyle: {
+        flex: 1,
+    },
+    activityTitleStyle: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    activityTimeStyle: {
+        color: '#808080',
+        fontSize: 12,
+    },
+    activityBadgeStyle: {
+        backgroundColor: 'rgba(74, 222, 128, 0.1)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+    },
+    badgeTextStyle: {
+        color: '#4ADE80',
+        fontSize: 12,
+        fontWeight: '600',
+    }
 });
 
 export default HomeScreen;
