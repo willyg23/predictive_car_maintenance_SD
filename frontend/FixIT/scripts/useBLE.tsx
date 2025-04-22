@@ -407,26 +407,27 @@ function useBLE() {
           console.error('Error reading DTC data:', error);
           return;
         }
+        
         if (characteristic?.value) {
           try {
             // First decode the Base64 string
             const decodedData = Buffer.from(characteristic.value, 'base64').toString('utf-8');
             console.log('Received raw DTC Data:', decodedData);
             
-            // Check if this is an end marker
-            if (decodedData === END_MARKER) {
-              console.log('End marker received, processing complete message');
+            // Check if this chunk contains the end marker
+            if (decodedData.includes(END_MARKER)) {
+              // Remove the end marker from the chunk before processing
+              const cleanedChunk = decodedData.replace(END_MARKER, '');
+              if (cleanedChunk.length > 0) {
+                dataBuffer += cleanedChunk;
+              }
               
-              // Try to parse the complete buffer as JSON
-              try {
-                // Verify we have a complete, valid JSON object
-                const jsonObj = JSON.parse(dataBuffer);
-                console.log('Successfully parsed complete JSON object:', jsonObj);
-                
-                // Add the valid JSON to our data array
-                setObdData(prev => [...prev, dataBuffer]);
-              } catch (jsonError) {
-                console.error('Error parsing assembled JSON data:', jsonError, 'Buffer:', dataBuffer);
+              console.log('End marker received, processing complete message');
+              console.log('Full buffered data:', dataBuffer);
+              
+              // Process the complete buffer if it's not empty
+              if (dataBuffer.length > 0) {
+                processCompleteJsonData(dataBuffer);
               }
               
               // Reset the buffer
@@ -434,29 +435,84 @@ function useBLE() {
               return;
             }
             
-            // Append to buffer
+            // Add this chunk to our buffer
             dataBuffer += decodedData;
-            
-            // As a fallback, try to see if the buffer already contains valid JSON
-            if (dataBuffer.startsWith('{') && dataBuffer.endsWith('}')) {
-              try {
-                // Check if we have valid JSON
-                JSON.parse(dataBuffer);
-                
-                // If we get here, it's valid JSON, so add it and reset buffer
-                console.log('Found valid JSON in buffer:', dataBuffer);
-                setObdData(prev => [...prev, dataBuffer]);
-                dataBuffer = "";
-              } catch (e) {
-                // Not valid JSON yet, continue buffering
-              }
-            }
           } catch (e) {
             console.error('Error processing data:', e);
           }
         }
-      },
+      }
     );
+  };
+  
+  // Helper function to process a complete JSON string
+  const processCompleteJsonData = (jsonString: string) => {
+    try {
+      // Clean up the string to ensure it's valid JSON
+      // Sometimes we might get extra whitespace or characters
+      let cleanedString = jsonString.trim();
+      
+      // Ensure we have a complete JSON object
+      if (!cleanedString.startsWith('{') || !cleanedString.endsWith('}')) {
+        console.error('Invalid JSON format - missing braces:', cleanedString);
+        return;
+      }
+      
+      // Validate by parsing
+      const jsonData = JSON.parse(cleanedString);
+      console.log('Successfully parsed complete JSON:', jsonData);
+      
+      // Store the valid JSON data
+      setObdData(prev => [...prev, cleanedString]);
+    } catch (jsonError: any) {
+      console.error('JSON parse error:', jsonError.message);
+      console.error('Problematic JSON string:', jsonString);
+      
+      // Attempt to fix common JSON issues
+      try {
+        // Try to reconstruct the JSON from what we know should be there
+        const fixedJson = attemptToFixJson(jsonString);
+        if (fixedJson) {
+          console.log('Fixed JSON:', fixedJson);
+          setObdData(prev => [...prev, fixedJson]);
+        }
+      } catch (fixError) {
+        console.error('Could not fix malformed JSON:', fixError);
+      }
+    }
+  };
+  
+  // Attempt to fix malformed JSON with common patterns
+  const attemptToFixJson = (brokenJson: string): string | null => {
+    // If we recognize our expected format, try to reconstruct it
+    if (brokenJson.includes('"dtcs":[') && 
+        (brokenJson.includes('"coolant_temp_c":') || brokenJson.includes('oolant_temp_c":'))) {
+      
+      // Extract the DTCs array
+      const dtcMatch = brokenJson.match(/"dtcs":\[(.*?)\]/);
+      const dtcs = dtcMatch ? dtcMatch[1] : '""';
+      
+      // Extract coolant temperature 
+      const coolantMatch = brokenJson.match(/(?:"c|c)oolant_temp_c":\s*(\d+)/);
+      const coolantTemp = coolantMatch ? coolantMatch[1] : '0';
+      
+      // Extract check engine light
+      const checkEngineMatch = brokenJson.match(/(?:"c|c)heck_engine_light":\s*(true|false)/);
+      const checkEngine = checkEngineMatch ? checkEngineMatch[1] : 'false';
+      
+      // Extract VIN if available
+      const vinMatch = brokenJson.match(/(?:"v|v)in":\s*"([^"]*)"/);
+      const vin = vinMatch ? vinMatch[1] : 'UNKNOWN';
+      
+      // Construct valid JSON
+      const fixedJson = `{"dtcs":[${dtcs}],"coolant_temp_c":${coolantTemp},"check_engine_light":${checkEngine},"vin":"${vin}"}`;
+      
+      // Validate it's proper JSON before returning
+      JSON.parse(fixedJson); // This will throw if invalid
+      return fixedJson;
+    }
+    
+    return null; // Could not fix
   };
 
   const disconnectFromDevice = () => {
@@ -471,6 +527,16 @@ function useBLE() {
       console.log('Disconnected from device');
       setConnectedDevice(null);
       setObdData([]);
+    }
+  };
+
+  // Add a helper function to the BLEContext component to parse and display readable DTC data
+  const parseOBDData = (data: string): any => {
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      console.error('Error parsing OBD data in helper:', e);
+      return null;
     }
   };
 
@@ -489,6 +555,7 @@ function useBLE() {
     testMode,
     disableTestMode,
     permissionError, // Export the permission error
+    parseOBDData,
   };
 }
 

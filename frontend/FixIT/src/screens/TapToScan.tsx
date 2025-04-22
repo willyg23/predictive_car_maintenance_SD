@@ -20,6 +20,7 @@ export const TapToScan = () => {
         testMode,
         disableTestMode,
         permissionError,
+        formattedData,
     } = useBLEContext();
 
     const [jsonInputVisible, setJsonInputVisible] = useState(false);
@@ -347,6 +348,71 @@ export const TapToScan = () => {
       }
     }, [connectedDevice, virtualModeActive]);
 
+    // Helper function to display DTC data in a more readable format
+    const renderDTCData = () => {
+      if (!connectedDevice) {
+        return <Text style={styles.dataText}>Not connected to any device.</Text>;
+      }
+      
+      if (obdData.length === 0) {
+        return <Text style={styles.dataText}>No DTCs received yet.</Text>;
+      }
+      
+      if (formattedData) {
+        return (
+          <View style={styles.dtcDataContainer}>
+            <View style={styles.dtcRow}>
+              <Text style={styles.dtcLabel}>Fault Codes:</Text>
+              <Text style={[
+                styles.dtcValue, 
+                formattedData.dtcs.length > 0 ? styles.dtcAlert : styles.dtcNormal
+              ]}>
+                {formattedData.dtcs_formatted}
+              </Text>
+            </View>
+            
+            <View style={styles.dtcRow}>
+              <Text style={styles.dtcLabel}>Coolant Temp:</Text>
+              <Text style={[
+                styles.dtcValue,
+                formattedData.coolant_temp_c > 95 ? styles.dtcAlert : styles.dtcNormal
+              ]}>
+                {formattedData.coolant_temp_c}°C / {formattedData.coolant_temp_f}°F
+              </Text>
+            </View>
+            
+            <View style={styles.dtcRow}>
+              <Text style={styles.dtcLabel}>Check Engine:</Text>
+              <Text style={[
+                styles.dtcValue,
+                formattedData.check_engine_light ? styles.dtcAlert : styles.dtcNormal
+              ]}>
+                {formattedData.check_engine_light ? 'ON' : 'OFF'}
+              </Text>
+            </View>
+            
+            {formattedData.vin && (
+              <View style={styles.dtcRow}>
+                <Text style={styles.dtcLabel}>VIN:</Text>
+                <Text style={styles.dtcValue}>{formattedData.vin}</Text>
+              </View>
+            )}
+          </View>
+        );
+      }
+      
+      // Fallback to just showing the raw JSON
+      return (
+        <ScrollView style={styles.rawJsonContainer}>
+          {obdData.map((dtc, index) => (
+            <Text key={index} style={styles.dataText}>
+              {dtc}
+            </Text>
+          ))}
+        </ScrollView>
+      );
+    };
+
     return(
         <SafeAreaView style={styles.container}>
           <View style={styles.screenWrapper}>
@@ -532,15 +598,7 @@ export const TapToScan = () => {
                 
                 <View>
                   <Text style={styles.dataTitleText}>DTC Data:</Text>
-                  {obdData.length > 0 ? (
-                    obdData.map((dtc, index) => (
-                      <Text key={index} style={styles.dataText}>
-                        {dtc}
-                      </Text>
-                    ))
-                  ) : (
-                    <Text style={styles.dataText}>No DTCs received.</Text>
-                  )}
+                  {renderDTCData()}
                 </View>
                 <Animated.View style={[styles.buttonWrapper, { transform: [{ scale: pulseAnim }] }]}>
                   <Pressable onPress={() => { startPulse(); disconnectFromDevice(); }}>
@@ -956,5 +1014,41 @@ const styles = StyleSheet.create({
       color: '#FFFFFF',
       fontSize: 14,
       fontWeight: '500',
+    },
+    dtcDataContainer: {
+      backgroundColor: 'rgba(0,0,0,0.3)',
+      borderRadius: 12,
+      marginVertical: 10,
+      padding: 16,
+      width: '90%',
+      maxWidth: 450,
+      alignSelf: 'center',
+    },
+    dtcRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: 'rgba(255,255,255,0.1)',
+    },
+    dtcLabel: {
+      color: '#AAAAAA',
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    dtcValue: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    dtcAlert: {
+      color: '#FF5F6D',
+    },
+    dtcNormal: {
+      color: '#4ADE80',
+    },
+    rawJsonContainer: {
+      maxHeight: 200,
+      width: '90%',
+      alignSelf: 'center',
     },
 });
