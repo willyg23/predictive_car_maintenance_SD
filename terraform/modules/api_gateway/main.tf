@@ -50,6 +50,14 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
   payload_format_version = "1.0"  # use 1.0 for the aws-wsgi library
 }
 
+resource "aws_lambda_permission" "api_gateway_lambda" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*"
+}
+
 # route for health check
 resource "aws_apigatewayv2_route" "health_check" {
   api_id    = aws_apigatewayv2_api.main.id
@@ -64,10 +72,30 @@ resource "aws_apigatewayv2_route" "create_db_schema" {
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
-resource "aws_lambda_permission" "api_gateway_lambda" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = var.lambda_function_name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*"
+# Route for getting all cars for a user
+resource "aws_apigatewayv2_route" "get_user_cars" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /${var.environment}/user/{user_uuid}/cars"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+# Route for creating a fake user
+resource "aws_apigatewayv2_route" "create_fake_user" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /${var.environment}/create_fake_user"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+# Route for deleting a car for a user
+resource "aws_apigatewayv2_route" "delete_user_car" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "DELETE /${var.environment}/user/{user_uuid}/car/{car_id}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+# Route for updating car details
+resource "aws_apigatewayv2_route" "update_car_details" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "PUT /${var.environment}/user/{user_uuid}/car/{car_id}/details"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
