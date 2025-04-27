@@ -250,3 +250,131 @@ def create_fake_user_data():
     finally:
         if conn:
             conn.close()
+
+
+@app.route(f"/{ENV}/user/<uuid:user_uuid>/car/<int:car_id>", methods=['DELETE'])
+def delete_user_car(user_uuid, car_id):
+    logger.info(f"Deleting car {car_id} for user: {user_uuid}")
+    try:
+        result = delete_car_for_user(user_uuid, car_id)
+        if result['deleted']:
+            return jsonify({"status": "success", "message": f"Car {car_id} successfully deleted"}), 200
+        else:
+            return jsonify({"status": "error", "message": result['message']}), 404
+    except Exception as e:
+        logger.error(f"Error in delete_user_car endpoint: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+def delete_car_for_user(user_uuid, car_id):
+    """Delete a specific car for a user if it belongs to them."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # First verify that the car belongs to the user
+        verify_query = """
+            SELECT car_id FROM cars
+            WHERE car_id = %s AND user_uuid = %s
+        """
+        cursor.execute(verify_query, (car_id, user_uuid))
+        car = cursor.fetchone()
+        
+        if not car:
+            logger.warning(f"Car {car_id} does not belong to user {user_uuid} or does not exist")
+            return {"deleted": False, "message": "Car not found or doesn't belong to this user"}
+        
+        # Delete the car (cascading delete will remove related records due to ON DELETE CASCADE)
+        delete_query = """
+            DELETE FROM cars
+            WHERE car_id = %s
+        """
+        cursor.execute(delete_query, (car_id,))
+        conn.commit()
+        
+        logger.info(f"Successfully deleted car {car_id} for user {user_uuid}")
+        return {"deleted": True}
+    
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.error(f"Error deleting car {car_id} for user {user_uuid}: {str(e)}")
+        raise
+    finally:
+        if conn:
+            conn.close()
+
+@app.route(f"/{ENV}/user/<uuid:user_uuid>/car/<int:car_id>/details", methods=['PUT'])
+def update_car_details(user_uuid, car_id):
+    logger.info(f"Updating details for car {car_id} owned by user: {user_uuid}")
+    try:
+        update_data = request.get_json()
+        if not update_data:
+            return jsonify({"status": "error", "message": "No update data provided"}), 400
+        
+        result = update_car_details_for_user(user_uuid, car_id, update_data)
+        if not result['updated']:
+            return jsonify({"status": "error", "message": result['message']}), 404
+        
+        return jsonify({"status": "success", "data": result['data']}), 200
+    except Exception as e:
+        logger.error(f"Error in update_car_details endpoint: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+def update_car_details_for_user(user_uuid, car_id, update_data):
+    """Update car details if the car belongs to the specified user."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Verify the car belongs to the user
+        cursor.execute("SELECT 1 FROM cars WHERE car_id = %s AND user_uuid = %s", (car_id, user_uuid))
+        if not cursor.fetchone():
+            return {"updated": False, "message": "Car not found or doesn't belong to this user"}
+
+        # Get allowed fields and filter the update data
+        allowed_fields = ['make', 'model', 'year', 'mileage', 'last_maintenance_checkup', 
+                          'last_oil_change', 'purchase_date', 'last_brake_pad_change']
+        filtered_data = {k: v for k, v in update_data.items() if k in allowed_fields}
+        
+        if not filtered_data:
+            return {"updated": False, "message": "No valid fields to update"}
+            
+        # Check if car_details record exists
+        cursor.execute("SELECT 1 FROM car_details WHERE car_id = %s", (car_id,))
+        details_exist = cursor.fetchone()
+        
+        if details_exist:
+            # Update existing record
+            set_clause = ", ".join([f"{field} = %s" for field in filtered_data])
+            query = f"UPDATE car_details SET {set_clause} WHERE car_id = %s RETURNING *"
+            values = list(filtered_data.values()) + [car_id]
+        else:
+            # Insert new record
+            fields = ['car_id'] + list(filtered_data.keys())
+            placeholders = ['%s'] * len(fields)
+            query = f"INSERT INTO car_details ({', '.join(fields)}) VALUES ({', '.join(placeholders)}) RETURNING *"
+            values = [car_id] + list(filtered_data.values())
+            
+        cursor.execute(query, values)
+        result = cursor.fetchone()
+        conn.commit()
+        
+        # Convert to dict and format dates
+        columns = [desc[0] for desc in cursor.description]
+        data = dict(zip(columns, result))
+        for k, v in data.items():
+            if isinstance(v, (datetime.date, datetime.datetime)):
+                data[k] = v.isoformat()
+                
+        return {"updated": True, "data": data}
+    
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.error(f"Error updating car details: {str(e)}")
+        raise
+    finally:
+        if conn:
+            conn.close()
