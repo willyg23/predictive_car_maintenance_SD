@@ -178,10 +178,11 @@ def create_fake_user_endpoint():
     try:
         user_uuid = create_fake_user_data()
         logger.info(f"Fake user created with UUID: {user_uuid}")
-        return jsonify({"status": "success", "message": "Fake user data created", "user_uuid": user_uuid})
+        return jsonify({"status": "success", "message": "Fake user data created", "user_uuid": str(user_uuid)})
     except Exception as e:
         logger.error(f"Error in create_fake_user endpoint: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 def create_fake_user_data():
     """Generate and store random fake data for a user, their cars, and car details."""
