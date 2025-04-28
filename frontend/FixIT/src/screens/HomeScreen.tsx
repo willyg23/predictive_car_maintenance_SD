@@ -160,7 +160,7 @@ const HomeScreen = () => {
                                     <Text style={styles.statEmoji}>🔧</Text>
                                 </View>
                                 <Text style={styles.statValue}>
-                                    {activeData.dtcs.length > 0 ? activeData.dtcs[0] : "None"}
+                                    {activeData.dtcs.length > 0 ? activeData.dtcs.join(", ") : "None"}
                                 </Text>
                                 <Text style={styles.statLabel}>Engine Code</Text>
                                 <View style={[
