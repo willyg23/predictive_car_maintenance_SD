@@ -72,3 +72,15 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Additional environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
