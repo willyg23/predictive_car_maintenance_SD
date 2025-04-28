@@ -5,11 +5,15 @@ meta {
 }
 
 get {
-  url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/123e4567-e89b-12d3-a456-426614174000/cars
+  url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/{{user_uuid}}/cars
   body: none
   auth: none
 }
 
 headers {
   Content-Type: application/json
+}
+
+vars:pre-request {
+  user_uuid: e84de32d-0015-46a9-a779-efb42ef98fc7
 }
