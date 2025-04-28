@@ -36,4 +36,6 @@ CREATE TABLE IF NOT EXISTS error_parts (
     error_event_id INTEGER NOT NULL REFERENCES error_events(error_event_id) ON DELETE CASCADE,
     part_name VARCHAR(255)
 );
+
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 """

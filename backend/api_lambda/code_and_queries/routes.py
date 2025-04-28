@@ -175,6 +175,7 @@ def get_user_cars_details(user_uuid):
 def create_fake_user_endpoint():
     logger.info("Create fake user endpoint accessed")
     try:
+        logger.info("new code has been deployed")
         user_uuid = create_fake_user_data()
         logger.info(f"Fake user created with UUID: {user_uuid}")
         # Convert UUID to string explicitly
