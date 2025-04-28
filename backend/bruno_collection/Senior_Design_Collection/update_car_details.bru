@@ -6,11 +6,29 @@ meta {
 
 put {
   url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/{{user_uuid}}/car/{{car_id}}/details
-  body: none
+  body: json
   auth: none
 }
 
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "detail_id": 1,
+    "make": "Ford",
+    "model": "F-150",
+    "year": 2021,
+    "mileage": 34500,
+    "last_maintenance_checkup": "2025-04-01",
+    "last_oil_change": "2025-03-15",
+    "purchase_date": "2023-08-20",
+    "last_brake_pad_change": "2025-02-10"
+  }
+}
+
 vars:pre-request {
-  car_id: 1
+  car_id: 3
   user_uuid: e84de32d-0015-46a9-a779-efb42ef98fc7
 }

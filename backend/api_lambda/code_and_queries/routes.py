@@ -382,7 +382,7 @@ def update_car_details_for_user(user_uuid, car_id, update_data):
         columns = [desc[0] for desc in cursor.description]
         data = dict(zip(columns, result))
         for k, v in data.items():
-            if isinstance(v, (datetime.date, datetime.datetime)):
+            if isinstance(v, (date, datetime)):
                 data[k] = v.isoformat()
                 
         return {"updated": True, "data": data}
