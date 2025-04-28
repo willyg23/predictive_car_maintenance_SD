@@ -6,24 +6,23 @@ import { RootStackParamList } from "../App";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const FeatureGrid = () => {
-        const navigation = useNavigation();
+        const navigation = useNavigation<NavigationProp>();
         const route = useRoute();
     return (
         <View style={styles.featureGrid}>
             <View style={styles.featureRow}>
                 <FeatureButton 
                     emoji="📋"
-                    text="Service\nHistory"
+                    text="Service History"
                 />
                 <FeatureButton 
                     emoji="🔍"
-                    text="Quick\nScan"
+                    text="Quick Scan"
                 />
             </View>
-            <Pressable onPress={() => navigation.navigate('AddCar')}>
-                <View style={styles.featureButton}>
-                    <Text style={styles.disabledText}>Add a vehicle to use FixIT</Text>
-                </View>
+            <Pressable onPress={() => navigation.navigate('AddCar')} style={styles.featureButton}>
+                <Text style={styles.featureEmoji}>➕</Text>
+                <Text style={styles.featureText}>Add Car</Text>
             </Pressable>
            
         </View>

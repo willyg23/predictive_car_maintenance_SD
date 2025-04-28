@@ -30,3 +30,4 @@ terraform/global/iam/terraform_state/.terraform/providers/registry.terraform.io/
 !example.tfvars
 
 .DS_Store
+node_modules
