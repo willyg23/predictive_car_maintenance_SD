@@ -75,27 +75,27 @@ resource "aws_apigatewayv2_route" "create_db_schema" {
 # Route for getting all cars for a user
 resource "aws_apigatewayv2_route" "get_user_cars" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "GET /${var.environment}/user/{user_uuid}/cars"
+  route_key = "GET /user/{user_uuid}/cars"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
 # Route for creating a fake user
 resource "aws_apigatewayv2_route" "create_fake_user" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /${var.environment}/create_fake_user"
+  route_key = "POST /create_fake_user"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
 # Route for deleting a car for a user
 resource "aws_apigatewayv2_route" "delete_user_car" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "DELETE /${var.environment}/user/{user_uuid}/car/{car_id}"
+  route_key = "DELETE /user/{user_uuid}/car/{car_id}"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 
 # Route for updating car details
 resource "aws_apigatewayv2_route" "update_car_details" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "PUT /${var.environment}/user/{user_uuid}/car/{car_id}/details"
+  route_key = "PUT /user/{user_uuid}/car/{car_id}/details"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }

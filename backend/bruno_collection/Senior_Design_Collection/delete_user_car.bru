@@ -1,0 +1,15 @@
+meta {
+  name: delete_user_car
+  type: http
+  seq: 6
+}
+
+delete {
+  url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/123e4567-e89b-12d3-a456-426614174000/car/{{car_id}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  car_id: 1
+}
