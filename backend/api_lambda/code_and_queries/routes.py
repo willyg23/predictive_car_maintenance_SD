@@ -171,17 +171,25 @@ def get_user_cars_details(user_uuid):
         if conn:
             conn.close()
 
-# Create fake user route stuff
 @app.route(f"/{ENV}/create_fake_user", methods=['POST'])
 def create_fake_user_endpoint():
     logger.info("Create fake user endpoint accessed")
     try:
         user_uuid = create_fake_user_data()
         logger.info(f"Fake user created with UUID: {user_uuid}")
-        return jsonify({"status": "success", "message": "Fake user data created", "user_uuid": str(user_uuid)})
+        # Convert UUID to string explicitly
+        user_uuid_str = str(user_uuid) if user_uuid else None
+        return jsonify({
+            "status": "success", 
+            "message": "Fake user data created", 
+            "user_uuid": user_uuid_str
+        })
     except Exception as e:
         logger.error(f"Error in create_fake_user endpoint: {str(e)}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        # Convert exception to string to ensure no UUID objects
+        error_message = str(e)
+        return jsonify({"status": "error", "message": error_message}), 500
+
 
 
 def create_fake_user_data():
