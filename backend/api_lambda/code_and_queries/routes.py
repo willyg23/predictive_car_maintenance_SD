@@ -9,7 +9,10 @@ import logging
 import awsgi
 import traceback
 import psycopg2
+import psycopg2.extras
 from sql_queries import CREATE_SCHEMA
+
+psycopg2.extras.register_uuid()
 
 ENV = os.environ.get('ENVIRONMENT')
 
@@ -68,6 +71,7 @@ def create_schema():
     """Create the database schema if it doesn't exist."""
     conn = None
     try:
+        logger.info("new code has been deployed 2")
         conn = get_db_connection()
         cursor = conn.cursor()
         
@@ -175,7 +179,7 @@ def get_user_cars_details(user_uuid):
 def create_fake_user_endpoint():
     logger.info("Create fake user endpoint accessed")
     try:
-        logger.info("new code has been deployed")
+        # logger.info("new code has been deployed")
         user_uuid = create_fake_user_data()
         logger.info(f"Fake user created with UUID: {user_uuid}")
         # Convert UUID to string explicitly
