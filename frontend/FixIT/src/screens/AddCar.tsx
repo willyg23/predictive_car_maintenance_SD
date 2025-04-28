@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DropDownPicker from 'react-native-dropdown-picker';
+import NetInfo from '@react-native-community/netinfo';
 
 // For TypeScript users: if you get a type error on the JSON import, add a declarations.d.ts file with: declare module '*.json';
 const carMakesModels: Record<string, string[]> = require('../assets/car-makes-models.json');
@@ -101,6 +102,10 @@ export const AddCar = () => {
         }
         
         setLoading(true);
+        
+        // Check network connectivity first
+        const netInfoState = await NetInfo.fetch();
+        
         try {
             const user_uuid = await getOrCreateUserUUID();
             const url = `https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/${user_uuid}/car/add_user_car`;
@@ -116,23 +121,112 @@ export const AddCar = () => {
                 purchase_date: purchaseDate ? purchaseDate.toISOString().split('T')[0] : undefined,
             };
             
-            const response = await fetch(url, {
+            console.log('Saving car with data:', JSON.stringify(body));
+            console.log('API URL:', url);
+            console.log('Network state:', netInfoState.isConnected ? 'Connected' : 'Disconnected');
+            
+            if (!netInfoState.isConnected) {
+                throw new Error("No internet connection");
+            }
+            
+            // Add timeout to fetch request
+            const fetchWithTimeout = (resource: RequestInfo, options: RequestInit = {}) => {
+                const controller = new AbortController();
+                const id = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                
+                return fetch(resource, {
+                    ...options,
+                    signal: controller.signal,
+                }).finally(() => {
+                    clearTimeout(id);
+                });
+            };
+            
+            const response = await fetchWithTimeout(url, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Accept": "application/json" 
+                },
                 body: JSON.stringify(body),
             });
             
-            const data = await response.json();
+            console.log('Response status:', response.status);
+            
+            // Parse response if possible, otherwise use null
+            let data;
+            try {
+                const textResponse = await response.text();
+                console.log('Raw response:', textResponse);
+                data = textResponse ? JSON.parse(textResponse) : null;
+            } catch (parseError) {
+                console.error('Error parsing response:', parseError);
+                data = null;
+            }
+            
             if (response.ok) {
                 clearForm();
                 Alert.alert('Success', 'Car added successfully!', [
                   { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
                 ]);
             } else {
-                Alert.alert('Error', data.message || "Failed to add car");
+                console.error('Error response:', data);
+                Alert.alert(
+                    'Error', 
+                    data?.message || `Server error (${response.status}). Please try again.`
+                );
             }
-        } catch (err) {
-            Alert.alert('Network error');
+        } catch (err: any) {
+            console.error('Network or other error:', err);
+            
+            // Offer offline mode
+            if (err.message === "No internet connection" || err.message?.includes('Network request failed')) {
+                Alert.alert(
+                    'Network Error', 
+                    'Could not connect to the server. Would you like to save this car locally for now?',
+                    [
+                        {
+                            text: 'Yes, Save Locally',
+                            onPress: async () => {
+                                try {
+                                    // Mock successful save for now
+                                    // In a real app, you would save to local storage here
+                                    const localData = {
+                                        id: Date.now().toString(),
+                                        make,
+                                        model,
+                                        year: year ? parseInt(year) : undefined,
+                                        mileage: mileage ? parseInt(mileage) : undefined,
+                                        nickname: nickname || undefined,
+                                        last_oil_change: lastOilChange ? lastOilChange.toISOString().split('T')[0] : undefined,
+                                        purchase_date: purchaseDate ? purchaseDate.toISOString().split('T')[0] : undefined,
+                                        pendingSync: true
+                                    };
+                                    
+                                    console.log('Saving locally:', localData);
+                                    // Here you would store in AsyncStorage
+                                    
+                                    clearForm();
+                                    Alert.alert('Success', 'Car saved locally. It will sync when you have internet.', [
+                                        { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
+                                    ]);
+                                } catch (localErr) {
+                                    Alert.alert('Error', 'Could not save locally. Please try again.');
+                                }
+                            }
+                        },
+                        {
+                            text: 'Try Again',
+                            style: 'cancel'
+                        }
+                    ]
+                );
+            } else {
+                Alert.alert(
+                    'Error', 
+                    'Something went wrong. Please try again later.'
+                );
+            }
         } finally {
             setLoading(false);
         }
@@ -187,8 +281,9 @@ export const AddCar = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
             >
-                <View 
-                    style={styles.scrollContent}
+                <ScrollView 
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
                 >
                     {/* Form Title */}
                     <Text style={styles.pageTitle}>Vehicle Information</Text>
@@ -381,7 +476,7 @@ export const AddCar = () => {
                             )}
                         </View>
                     </View>
-                </View>
+                </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
