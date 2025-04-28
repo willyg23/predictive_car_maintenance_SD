@@ -1,5 +1,4 @@
-from datetime import datetime, timedelta
-import datetime
+from datetime import datetime, date, timedelta
 import random
 import string
 import uuid
@@ -482,7 +481,7 @@ def create_car_for_user(user_uuid, car_data):
 
         # Format dates for JSON response
         for key, value in new_car_details.items():
-            if isinstance(value, (datetime.date, datetime.datetime)):
+            if isinstance(value, (date, datetime)):
                 new_car_details[key] = value.isoformat() if value else None # Handle potential None dates
 
         logger.info(f"Successfully created car details for car_id: {car_id}")
