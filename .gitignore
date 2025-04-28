@@ -2,6 +2,9 @@
 
 .env
 .venv
+.DS_Store
+backend/.DS_Store
+
 
 # Terraform files and directories
 **/.terraform/*
@@ -13,7 +16,7 @@ terraform.tfvars
 terraform.rc
 crash.log
 crash.*.log
-.DS_Store
+.terraform.lock.hcl
 
 # Specifically ignore provider files
 **/.terraform/providers/registry.terraform.io/hashicorp/aws/**

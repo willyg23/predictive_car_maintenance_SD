@@ -26,7 +26,7 @@ resource "aws_subnet" "public_subnets" {
   }
 }
 
-resource "aws_subnet" "private_subnets" {
+resource "aws_subnet" "private_subnets" { # private subnets. our database subnet points to these. other resources exist in these subnets too.
   count             = length(var.private_subnet_cidrs)
   vpc_id            = aws_vpc.vpc_main.id
   cidr_block        = element(var.private_subnet_cidrs, count.index)
@@ -84,6 +84,7 @@ resource "aws_route_table_association" "private_route_table_association" {
   route_table_id = aws_route_table.private_route_table.id
 }
 
+# change this to not be using a module in here cause this is a weird way to write terraform will
 module "security_groups" {
   source      = "./security_groups"
   environment = var.environment
@@ -94,7 +95,7 @@ module "security_groups" {
 resource "aws_db_subnet_group" "rds_subnet_group" {
   name        = "${var.environment}_rds_subnet_group"
   description = "RDS subnet group that points to our private subnets"
-  subnet_ids  = aws_subnet.private_subnets[*].id
+  subnet_ids  = aws_subnet.private_subnets[*].id # private subnets the database subnet points to
 
   tags = {
     Name        = "${var.environment}_rds_subnet_group"

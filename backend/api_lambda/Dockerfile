@@ -1,11 +1,11 @@
-FROM public.ecr.aws/lambda/python:3.9-arm64
+FROM public.ecr.aws/lambda/python:3.12-arm64
 
 # Copy requirements and install dependencies
 COPY requirements.txt ${LAMBDA_TASK_ROOT}/
 RUN pip install -r ${LAMBDA_TASK_ROOT}/requirements.txt
 
 # Copy function code to the correct location
-COPY routes.py ${LAMBDA_TASK_ROOT}/
+COPY code_and_queries/* ${LAMBDA_TASK_ROOT}/
 
 # Command can be passed to the runtime
 CMD [ "routes.lambda_handler" ]

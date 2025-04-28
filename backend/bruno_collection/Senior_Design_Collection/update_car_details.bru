@@ -1,0 +1,16 @@
+meta {
+  name: update_car_details
+  type: http
+  seq: 7
+}
+
+put {
+  url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/{{user_uuid}}/car/{{car_id}}/details
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  car_id: 1
+  user_uuid: e84de32d-0015-46a9-a779-efb42ef98fc7
+}

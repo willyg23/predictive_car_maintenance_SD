@@ -20,6 +20,16 @@ resource "aws_lambda_function" "api_lambda" {
     }
   }
 
+# TEMPORARY. NOT BEST PRACTICE.
+# am using because the security groups created in the aws console to connect the lambda and database are not in terraform.
+# as such, terraform tries to delete them (the security groups created in the aws console to connect the lambda and database)
+# so this makes it so that terraform doesn't do that.
+  lifecycle {
+    ignore_changes = [
+      vpc_config,  # This will ignore any changes to the VPC configuration
+    ]
+  }
+
   tags = {
     Environment = var.environment
     Name        = "${var.environment}-api-lambda"

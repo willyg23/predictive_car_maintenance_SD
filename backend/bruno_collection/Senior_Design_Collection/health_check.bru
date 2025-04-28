@@ -1,0 +1,15 @@
+meta {
+  name: health_check_endpoint
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/health
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}

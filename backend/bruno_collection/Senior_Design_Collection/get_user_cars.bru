@@ -1,0 +1,19 @@
+meta {
+  name: get_user_cars
+  type: http
+  seq: 4
+}
+
+get {
+  url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/{{user_uuid}}/cars
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+vars:pre-request {
+  user_uuid: e84de32d-0015-46a9-a779-efb42ef98fc7
+}
