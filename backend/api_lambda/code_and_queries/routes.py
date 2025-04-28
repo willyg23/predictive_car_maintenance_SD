@@ -395,3 +395,104 @@ def update_car_details_for_user(user_uuid, car_id, update_data):
     finally:
         if conn:
             conn.close()
+
+
+
+@app.route(f"/{ENV}/user/<uuid:user_uuid>/car/add_user_car", methods=['POST'])
+def add_user_car(user_uuid):
+    """Endpoint to add a new car for a specific user."""
+    logger.info(f"Received request to add car for user: {user_uuid}")
+    
+    car_data = request.get_json()
+    if not car_data:
+        logger.warning("Add car request received without JSON body")
+        return jsonify({"status": "error", "message": "Missing car data in request body"}), 400
+
+    try:
+        result = create_car_for_user(user_uuid, car_data)
+        
+        if result["created"]:
+            logger.info(f"Successfully added car for user {user_uuid}. Car ID: {result['data']['car_id']}")
+            # Return 201 Created status code for successful creation
+            return jsonify({"status": "success", "message": "Car added successfully", "data": result["data"]}), 201 
+        else:
+            # Handle specific known errors like 'User not found'
+            logger.warning(f"Failed to add car for user {user_uuid}: {result['message']}")
+            status_code = 404 if result["message"] == "User not found" else 400
+            return jsonify({"status": "error", "message": result["message"]}), status_code
+
+    except Exception as e:
+        # Catch unexpected errors from the db operation function
+        logger.error(f"Unexpected error in add_user_car endpoint for user {user_uuid}: {str(e)}")
+        return jsonify({"status": "error", "message": "An internal error occurred"}), 500
+    
+
+def create_car_for_user(user_uuid, car_data):
+    """Create a new car and its details for a specific user."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # 1. Verify the user exists
+        cursor.execute("SELECT 1 FROM users WHERE uuid = %s", (user_uuid,))
+        if not cursor.fetchone():
+            logger.warning(f"Attempt to add car for non-existent user: {user_uuid}")
+            return {"created": False, "message": "User not found"}
+
+        # 2. Insert the new car record to get a car_id
+        cursor.execute(
+            "INSERT INTO cars (user_uuid) VALUES (%s) RETURNING car_id",
+            (user_uuid,)
+        )
+        car_id = cursor.fetchone()[0]
+        logger.info(f"Created new car record with car_id: {car_id} for user {user_uuid}")
+
+        # 3. Prepare and insert the car details
+        # Use .get() to handle potentially missing optional fields
+        make = car_data.get('make')
+        model = car_data.get('model')
+        year = car_data.get('year')
+        mileage = car_data.get('mileage')
+        last_maintenance_checkup = car_data.get('last_maintenance_checkup')
+        last_oil_change = car_data.get('last_oil_change')
+        purchase_date = car_data.get('purchase_date')
+        last_brake_pad_change = car_data.get('last_brake_pad_change')
+
+        details_query = """
+            INSERT INTO car_details
+            (car_id, make, model, year, mileage, last_maintenance_checkup,
+             last_oil_change, purchase_date, last_brake_pad_change)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING * 
+        """ # RETURNING * gets the newly created detail record
+        cursor.execute(
+            details_query,
+            (car_id, make, model, year, mileage, last_maintenance_checkup,
+             last_oil_change, purchase_date, last_brake_pad_change)
+        )
+        
+        new_details_record = cursor.fetchone()
+        conn.commit()
+
+        # Convert the returned record to a dictionary for the response
+        columns = [desc[0] for desc in cursor.description]
+        new_car_details = dict(zip(columns, new_details_record))
+
+        # Format dates for JSON response
+        for key, value in new_car_details.items():
+            if isinstance(value, (datetime.date, datetime.datetime)):
+                new_car_details[key] = value.isoformat() if value else None # Handle potential None dates
+
+        logger.info(f"Successfully created car details for car_id: {car_id}")
+        return {"created": True, "data": new_car_details}
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.error(f"Error creating car for user {user_uuid}: {str(e)}")
+        # Consider more specific error handling if needed (e.g., DataError for bad date format)
+        raise # Re-raise the exception to be caught by the route handler
+    finally:
+        if conn:
+            conn.close()

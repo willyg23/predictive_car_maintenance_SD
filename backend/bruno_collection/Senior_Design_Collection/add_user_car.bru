@@ -1,0 +1,34 @@
+meta {
+  name: add_user_car
+  type: http
+  seq: 8
+}
+
+post {
+  url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/{{user_uuid}}/car/add_user_car
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+// Example car data - adjust values as needed
+// Optional fields can be omitted or set to null if your DB/code handles it
+body:json {
+  {
+    "make": "Honda",
+    "model": "Civic",
+    "year": 2022,
+    "mileage": 15000,
+    "last_maintenance_checkup": "2024-01-10", // Use YYYY-MM-DD format
+    "last_oil_change": "2024-03-15",       // Use YYYY-MM-DD format
+    "purchase_date": "2022-05-20",         // Use YYYY-MM-DD format
+    "last_brake_pad_change": null        // Example of an optional field being null
+  }
+}
+
+vars:pre-request {
+  user_uuid: e84de32d-0015-46a9-a779-efb42ef98fc7
+}

@@ -99,3 +99,10 @@ resource "aws_apigatewayv2_route" "update_car_details" {
   route_key = "PUT /user/{user_uuid}/car/{car_id}/details"
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
+
+# Route for a user adding a new car
+resource "aws_apigatewayv2_route" "add_user_car" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /user/{user_uuid}/car/add_user_car" 
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
