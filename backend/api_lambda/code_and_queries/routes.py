@@ -203,22 +203,22 @@ def create_fake_user_data():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Generate fake user data
         user_uuid = uuid.uuid4()
         email = f"{''.join(random.choices(string.ascii_lowercase, k=8))}@example.com"
         location = random.choice(["New York", "Los Angeles", "Chicago", "Houston", "Phoenix"])
-        
+
         # Insert user into database
         cursor.execute(
             "INSERT INTO users (uuid, email, location) VALUES (%s, %s, %s)",
             (user_uuid, email, location)
         )
-        
+
         # Generate random number of cars (1-3)
         num_cars = random.randint(1, 3)
         car_ids = []
-        
+
         for _ in range(num_cars):
             # Insert car into database
             cursor.execute(
@@ -227,31 +227,33 @@ def create_fake_user_data():
             )
             car_id = cursor.fetchone()[0]
             car_ids.append(car_id)
-            
+
             # Generate fake car details
             make = random.choice(["Toyota", "Ford", "Honda", "Chevrolet", "Nissan"])
             model = random.choice(["Corolla", "F-150", "Civic", "Silverado", "Altima"])
             year = random.randint(2000, 2023)
             mileage = random.randint(0, 200000)
-            
-            # Generate random dates
-            last_maintenance_checkup = datetime.now() - datetime.timedelta(days=random.randint(30, 365))
-            last_oil_change = datetime.now() - datetime.timedelta(days=random.randint(30, 180))
-            purchase_date = datetime.now() - datetime.timedelta(days=random.randint(365, 3650))
-            last_brake_pad_change = datetime.now() - datetime.timedelta(days=random.randint(30, 365))
-            
+
+            # --- FIX IS HERE ---
+            # Generate random dates - use timedelta directly
+            last_maintenance_checkup = datetime.now() - timedelta(days=random.randint(30, 365))
+            last_oil_change = datetime.now() - timedelta(days=random.randint(30, 180))
+            purchase_date = datetime.now() - timedelta(days=random.randint(365, 3650))
+            last_brake_pad_change = datetime.now() - timedelta(days=random.randint(30, 365))
+            # -------------------
+
             # Insert car details into database
             cursor.execute(
                 """
-                INSERT INTO car_details 
-                (car_id, make, model, year, mileage, last_maintenance_checkup, 
+                INSERT INTO car_details
+                (car_id, make, model, year, mileage, last_maintenance_checkup,
                 last_oil_change, purchase_date, last_brake_pad_change)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (car_id, make, model, year, mileage, last_maintenance_checkup,
                  last_oil_change, purchase_date, last_brake_pad_change)
             )
-        
+
         # Commit the transaction
         conn.commit()
         logger.info(f"Created user with UUID {user_uuid} and {num_cars} cars")
@@ -264,6 +266,7 @@ def create_fake_user_data():
     finally:
         if conn:
             conn.close()
+
 
 
 @app.route(f"/{ENV}/user/<uuid:user_uuid>/car/<int:car_id>", methods=['DELETE'])
