@@ -1,0 +1,360 @@
+openapi: 3.0.0
+info:
+  title: Car Maintenance App API
+  version: 1.0.0
+  description: |
+    RESTful API for managing users, cars, and maintenance data in the Senior Design Project car maintenance app.
+servers:
+  - url: https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev
+
+paths:
+  /:
+    get:
+      summary: Default route
+      description: Returns a simple HTML greeting.
+      responses:
+        "200":
+          description: HTML greeting
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /health:
+    get:
+      summary: Health check
+      description: Returns service health status.
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefaultResponse'
+
+  /create_db_schema:
+    post:
+      summary: Create database schema
+      description: Executes the SQL schema creation commands.
+      responses:
+        "200":
+          description: Schema created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefaultResponse'
+        "500":
+          description: Error during schema creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /create_fake_user:
+    post:
+      summary: Generate fake user data
+      description: Creates random user, cars, and car details for testing.
+      responses:
+        "200":
+          description: Fake user created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateFakeUserResponse'
+        "500":
+          description: Error creating fake user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /user/{user_uuid}/cars:
+    get:
+      summary: List user's cars and details
+      parameters:
+        - $ref: '#/components/parameters/UserUUID'
+      responses:
+        "200":
+          description: Array of cars with details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCarsResponse'
+        "500":
+          description: Error retrieving cars
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /user/{user_uuid}/car/add_user_car:
+    post:
+      summary: Add a new car for a user
+      parameters:
+        - $ref: '#/components/parameters/UserUUID'
+      requestBody:
+        description: Car detail fields (all optional)
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewCarRequest'
+      responses:
+        "201":
+          description: Car added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddUserCarResponse'
+        "400":
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /user/{user_uuid}/car/{car_id}:
+    delete:
+      summary: Delete a user's car
+      parameters:
+        - $ref: '#/components/parameters/UserUUID'
+        - $ref: '#/components/parameters/CarID'
+      responses:
+        "200":
+          description: Car deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefaultResponse'
+        "404":
+          description: Car not found or does not belong to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /user/{user_uuid}/car/{car_id}/details:
+    put:
+      summary: Update car details
+      parameters:
+        - $ref: '#/components/parameters/UserUUID'
+        - $ref: '#/components/parameters/CarID'
+      requestBody:
+        description: Fields to update on the car details record
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCarDetailsRequest'
+      responses:
+        "200":
+          description: Car details updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCarDetailsResponse'
+        "400":
+          description: No update data provided or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: Car not found or does not belong to user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  parameters:
+    UserUUID:
+      name: user_uuid
+      in: path
+      required: true
+      description: UUID of the user
+      schema:
+        type: string
+        format: uuid
+    CarID:
+      name: car_id
+      in: path
+      required: true
+      description: Identifier of the car
+      schema:
+        type: integer
+
+  schemas:
+    DefaultResponse:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+      required:
+        - status
+        - message
+
+    CreateFakeUserResponse:
+      allOf:
+        - $ref: '#/components/schemas/DefaultResponse'
+        - type: object
+          properties:
+            message:
+              type: string
+            user_uuid:
+              type: string
+              format: uuid
+          required:
+            - message
+            - user_uuid
+
+    UserCarsResponse:
+      allOf:
+        - $ref: '#/components/schemas/DefaultResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/CarDetail'
+
+    NewCarRequest:
+      type: object
+      properties:
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        mileage:
+          type: integer
+        last_maintenance_checkup:
+          type: string
+          format: date
+        last_oil_change:
+          type: string
+          format: date
+        purchase_date:
+          type: string
+          format: date
+        last_brake_pad_change:
+          type: string
+          format: date
+
+    AddUserCarResponse:
+      allOf:
+        - $ref: '#/components/schemas/DefaultResponse'
+        - type: object
+          properties:
+            message:
+              type: string
+            data:
+              $ref: '#/components/schemas/CarDetail'
+          required:
+            - message
+            - data
+
+    UpdateCarDetailsRequest:
+      type: object
+      description: Fields to update for an existing car_details record
+      properties:
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        mileage:
+          type: integer
+        last_maintenance_checkup:
+          type: string
+          format: date
+        last_oil_change:
+          type: string
+          format: date
+        purchase_date:
+          type: string
+          format: date
+        last_brake_pad_change:
+          type: string
+          format: date
+
+    UpdateCarDetailsResponse:
+      allOf:
+        - $ref: '#/components/schemas/DefaultResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/CarDetail'
+          required:
+            - data
+
+    CarDetail:
+      type: object
+      properties:
+        detail_id:
+          type: integer
+        car_id:
+          type: integer
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+        mileage:
+          type: integer
+        last_maintenance_checkup:
+          type: string
+          format: date
+        last_oil_change:
+          type: string
+          format: date
+        purchase_date:
+          type: string
+          format: date
+        last_brake_pad_change:
+          type: string
+          format: date
+      required:
+        - detail_id
+        - car_id
+        - make
+        - model
+        - year
+        - mileage
