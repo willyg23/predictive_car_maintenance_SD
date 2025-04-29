@@ -26,19 +26,46 @@ const carMakesModels: Record<string, string[]> = require('../assets/car-makes-mo
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+// Define Car type for TypeScript
+interface Car {
+    id: string;
+    nickname: string;
+    year: string;
+    make: string;
+    model: string;
+    mileage?: string;
+    last_oil_change?: string | null;
+    purchase_date?: string | null;
+}
+
 export const AddCar = () => {
+    const route = useRoute();
+    const params = route.params as { editMode?: boolean; carData?: Car } | undefined;
+    const isEditMode = params?.editMode || false;
+    const carToEdit = params?.carData;
+    
     // Basic form state
-    const [year, setYear] = useState('');
-    const [make, setMake] = useState('');
-    const [model, setModel] = useState('');
-    const [nickname, setNickname] = useState('');
-    const [mileage, setMileage] = useState('');
+    const [year, setYear] = useState(isEditMode && carToEdit?.year ? carToEdit.year : '');
+    const [make, setMake] = useState(isEditMode && carToEdit?.make ? carToEdit.make : '');
+    const [model, setModel] = useState(isEditMode && carToEdit?.model ? carToEdit.model : '');
+    const [nickname, setNickname] = useState(isEditMode && carToEdit?.nickname ? carToEdit.nickname : '');
+    const [mileage, setMileage] = useState(isEditMode && carToEdit?.mileage ? carToEdit.mileage : '');
+    const [carId, setCarId] = useState(isEditMode && carToEdit?.id ? carToEdit.id : '');
     const [loading, setLoading] = useState(false);
     
     // Date picker states
-    const [lastOilChange, setLastOilChange] = useState<Date | null>(null);
+    const [lastOilChange, setLastOilChange] = useState<Date | null>(
+        isEditMode && carToEdit?.last_oil_change 
+            ? new Date(carToEdit.last_oil_change) 
+            : null
+    );
     const [showLastOilChangePicker, setShowLastOilChangePicker] = useState(false);
-    const [purchaseDate, setPurchaseDate] = useState<Date | null>(null);
+    
+    const [purchaseDate, setPurchaseDate] = useState<Date | null>(
+        isEditMode && carToEdit?.purchase_date 
+            ? new Date(carToEdit.purchase_date) 
+            : null
+    );
     const [showPurchaseDatePicker, setShowPurchaseDatePicker] = useState(false);
     
     // Dropdown states
@@ -51,18 +78,36 @@ export const AddCar = () => {
     
     const navigation = useNavigation<NavigationProp>();
     
-    // Update models when make changes
+    // Update models when make changes or on initial load in edit mode
     useEffect(() => {
-      if (make && carMakesModels[make]) {
-        setModelItems(carMakesModels[make].map((m: string) => ({ label: m, value: m })));
+      if (make) {
+        const models = carMakesModels[make] || [];
+        setModelItems(models.map((m: string) => ({ label: m, value: m })));
+        
+        // If we're in edit mode and have a model but the modelItems just got set,
+        // we don't need to clear the model - it should stay populated
+        if (!(isEditMode && carToEdit?.model && model)) {
+          // Only reset model if we're not in edit mode with a valid model
+          if (!isEditMode && model) {
+            setModel('');
+          }
+        }
       } else {
         setModelItems([]);
+        if (model) setModel('');
       }
-      
-      // Reset model if make changes
-      if (model) setModel('');
-      
-    }, [make]);
+    }, [make, isEditMode, carToEdit]);
+
+    // Special effect to handle initial model population in edit mode
+    useEffect(() => {
+      // This effect runs only once on component mount when in edit mode
+      if (isEditMode && carToEdit?.make && carToEdit?.model) {
+        // Ensure model options are loaded for the selected make
+        const models = carMakesModels[carToEdit.make] || [];
+        setModelItems(models.map((m: string) => ({ label: m, value: m })));
+        console.log(`Edit mode: Prefilling model: ${carToEdit.model} from make: ${carToEdit.make}`);
+      }
+    }, []);
     
     // User UUID - hardcoded instead of creating fake users
     const getOrCreateUserUUID = async (): Promise<string> => {
@@ -89,141 +134,239 @@ export const AddCar = () => {
         setPurchaseDate(null);
     };
 
-    // Save to API
-    const saveToDB = async () => {
-        if (!make || !model || !year) {
-            Alert.alert('Missing Fields', 'Please fill in Make, Model, and Year.');
+    // Update the title based on mode
+    const pageTitle = isEditMode ? 'Edit Vehicle' : 'Add Vehicle';
+    const headerTitle = isEditMode ? '🚗 Edit Car' : '🚗 Add Car';
+    const saveButtonText = isEditMode ? 'Update' : 'Save';
+
+    const handleSubmit = async () => {
+        // Basic validation
+        if (!year || !make || !model) {
+            Alert.alert('Missing Information', 'Please fill in required fields (Year, Make, Model)');
             return;
         }
-        
-        setLoading(true);
-        
-        // Check network connectivity first
-        const netInfoState = await NetInfo.fetch();
-        
+
         try {
-            const user_uuid = await getOrCreateUserUUID();
-            const url = `https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/${user_uuid}/car/add_user_car`;
+            setLoading(true);
             
-            // Build request body with all form fields
-            const body = {
+            // Get network state
+            const netState = await NetInfo.fetch();
+            
+            // Get or create user UUID
+            const user_uuid = await getOrCreateUserUUID();
+            
+            // For debugging purposes
+            console.log("Using user UUID:", user_uuid);
+
+            // Create car object (either new or updated)
+            const carData = {
+                id: isEditMode ? carId : Date.now().toString(), // Use existing ID if editing
+                nickname: nickname || `${year} ${make} ${model}`, // Use default nickname if not provided
+                year,
                 make,
                 model,
-                year: year ? parseInt(year) : undefined,
-                mileage: mileage ? parseInt(mileage) : undefined,
-                nickname: nickname || undefined,
-                last_oil_change: lastOilChange ? lastOilChange.toISOString().split('T')[0] : undefined,
-                purchase_date: purchaseDate ? purchaseDate.toISOString().split('T')[0] : undefined,
+                mileage: mileage || '0',
+                last_oil_change: lastOilChange ? lastOilChange.toISOString() : null,
+                purchase_date: purchaseDate ? purchaseDate.toISOString() : null,
             };
-            
-            console.log('Saving car with data:', JSON.stringify(body));
-            console.log('API URL:', url);
-            console.log('Network state:', netInfoState.isConnected ? 'Connected' : 'Disconnected');
-            
-            if (!netInfoState.isConnected) {
-                throw new Error("No internet connection");
+
+            // Track which car was edited if in edit mode
+            let editedCarId = null;
+            if (isEditMode && carId) {
+                editedCarId = carId;
+                console.log(`Setting up edited car ID for return navigation: ${editedCarId}`);
             }
-            
-            // Add timeout to fetch request
-            const fetchWithTimeout = (resource: RequestInfo, options: RequestInit = {}) => {
-                const controller = new AbortController();
-                const id = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+            // Different actions based on whether we're editing or creating
+            if (isEditMode) {
+                // Save to AsyncStorage first for offline use
+                await updateCarInLocalStorage(carData);
                 
-                return fetch(resource, {
-                    ...options,
-                    signal: controller.signal,
-                }).finally(() => {
-                    clearTimeout(id);
-                });
-            };
-            
-            const response = await fetchWithTimeout(url, {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "Accept": "application/json" 
-                },
-                body: JSON.stringify(body),
-            });
-            
-            console.log('Response status:', response.status);
-            
-            // Parse response if possible, otherwise use null
-            let data;
-            try {
-                const textResponse = await response.text();
-                console.log('Raw response:', textResponse);
-                data = textResponse ? JSON.parse(textResponse) : null;
-            } catch (parseError) {
-                console.error('Error parsing response:', parseError);
-                data = null;
-            }
-            
-            if (response.ok) {
-                clearForm();
-                Alert.alert('Success', 'Car added successfully!', [
-                  { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
-                ]);
+                // If online, try to update via backend
+                if (netState.isConnected && netState.isInternetReachable) {
+                    await updateCarInBackend(user_uuid, carData);
+                }
+                
+                Alert.alert('Success', 'Car updated successfully!');
             } else {
-                console.error('Error response:', data);
-                Alert.alert(
-                    'Error', 
-                    data?.message || `Server error (${response.status}). Please try again.`
-                );
+                // Save to AsyncStorage first for offline use
+                await saveCarToLocalStorage(carData);
+                
+                // If online, try to save to backend
+                if (netState.isConnected && netState.isInternetReachable) {
+                    await saveCarToBackend(user_uuid, carData);
+                }
+                
+                Alert.alert('Success', 'Car added successfully!');
             }
-        } catch (err: any) {
-            console.error('Network or other error:', err);
-            
-            // Offer offline mode
-            if (err.message === "No internet connection" || err.message?.includes('Network request failed')) {
-                Alert.alert(
-                    'Network Error', 
-                    'Could not connect to the server. Would you like to save this car locally for now?',
-                    [
-                        {
-                            text: 'Yes, Save Locally',
-                            onPress: async () => {
-                                try {
-                                    // Mock successful save for now
-                                    // In a real app, you would save to local storage here
-                                    const localData = {
-                                        id: Date.now().toString(),
-                                        make,
-                                        model,
-                                        year: year ? parseInt(year) : undefined,
-                                        mileage: mileage ? parseInt(mileage) : undefined,
-                                        nickname: nickname || undefined,
-                                        last_oil_change: lastOilChange ? lastOilChange.toISOString().split('T')[0] : undefined,
-                                        purchase_date: purchaseDate ? purchaseDate.toISOString().split('T')[0] : undefined,
-                                        pendingSync: true
-                                    };
-                                    
-                                    console.log('Saving locally:', localData);
-                                    // Here you would store in AsyncStorage
-                                    
-                                    clearForm();
-                                    Alert.alert('Success', 'Car saved locally. It will sync when you have internet.', [
-                                        { text: 'OK', onPress: () => navigation.navigate('HomeScreen') }
-                                    ]);
-                                } catch (localErr) {
-                                    Alert.alert('Error', 'Could not save locally. Please try again.');
-                                }
-                            }
-                        },
-                        {
-                            text: 'Try Again',
-                            style: 'cancel'
-                        }
-                    ]
-                );
-            } else {
-                Alert.alert(
-                    'Error', 
-                    'Something went wrong. Please try again later.'
-                );
-            }
+
+            // Add a small delay before navigating to allow the backend sync to complete
+            setTimeout(() => {
+                const navParams = { 
+                    activeTab: 'cars',
+                    focusCarId: editedCarId
+                };
+                console.log('Navigating with params:', JSON.stringify(navParams));
+                navigation.navigate('HomeScreen', navParams);
+            }, 500);
+        } catch (error) {
+            console.error(`Error ${isEditMode ? 'updating' : 'adding'} car:`, error);
+            Alert.alert('Error', `Could not ${isEditMode ? 'update' : 'add'} car. Please try again.`);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Function to save car to AsyncStorage
+    const saveCarToLocalStorage = async (car: Car): Promise<void> => {
+        try {
+            // Get existing cars array or initialize a new one
+            const existingCarsJSON = await AsyncStorage.getItem('user_cars');
+            const existingCars = existingCarsJSON ? JSON.parse(existingCarsJSON) : [];
+            
+            // Add new car to array
+            const updatedCars = [...existingCars, car];
+            
+            // Save updated array back to AsyncStorage
+            await AsyncStorage.setItem('user_cars', JSON.stringify(updatedCars));
+            
+            console.log('Car saved to local storage');
+        } catch (error) {
+            console.error('Error saving car to local storage:', error);
+            throw error;
+        }
+    };
+
+    // Function to save car to backend
+    const saveCarToBackend = async (userUUID: string, car: Car): Promise<boolean> => {
+        try {
+            const apiUrl = `https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/${userUUID}/car/add_user_car`;
+            
+            console.log('Sending car data to API:', apiUrl, car);
+            
+            // Format the car data according to the API requirements
+            const apiBody = {
+                make: car.make,
+                model: car.model,
+                year: parseInt(car.year),
+                mileage: car.mileage ? parseInt(car.mileage) : undefined,
+                nickname: car.nickname,
+                // Only send nickname, not car_nickname to avoid confusion
+                last_oil_change: car.last_oil_change ? car.last_oil_change.split('T')[0] : undefined,
+                purchase_date: car.purchase_date ? car.purchase_date.split('T')[0] : undefined
+            };
+            
+            console.log('API request body:', JSON.stringify(apiBody, null, 2));
+            
+            // Add timeout to fetch request for better UX
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(apiBody),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            // Log response for debugging
+            console.log('API Response status:', response.status);
+            
+            if (response.ok) {
+                const responseData = await response.json();
+                console.log('API Response data:', JSON.stringify(responseData, null, 2));
+                return true;
+            } else {
+                const errorText = await response.text();
+                console.error('API Error response:', errorText);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error saving car to backend:', error);
+            // Still consider it a success if saved locally but failed to save to backend
+            return false;
+        }
+    };
+
+    // Function to update car in AsyncStorage
+    const updateCarInLocalStorage = async (car: Car): Promise<void> => {
+        try {
+            // Get existing cars array
+            const existingCarsJSON = await AsyncStorage.getItem('user_cars');
+            const existingCars = existingCarsJSON ? JSON.parse(existingCarsJSON) : [];
+            
+            // Update car in array
+            const updatedCars = existingCars.map((c: Car) => 
+                c.id.toString() === car.id.toString() ? car : c
+            );
+            
+            // Save updated array back to AsyncStorage
+            await AsyncStorage.setItem('user_cars', JSON.stringify(updatedCars));
+            
+            console.log('Car updated in local storage');
+        } catch (error) {
+            console.error('Error updating car in local storage:', error);
+            throw error;
+        }
+    };
+
+    // Function to update car in backend
+    const updateCarInBackend = async (userUUID: string, car: Car): Promise<boolean> => {
+        try {
+            const apiUrl = `https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/user/${userUUID}/car/${car.id}/details`;
+            
+            console.log('Sending updated car data to API:', apiUrl);
+            console.log('API request body:', JSON.stringify(car, null, 2));
+            
+            // Format the car data according to the API requirements
+            const apiBody = {
+                make: car.make,
+                model: car.model,
+                year: parseInt(car.year),
+                mileage: car.mileage ? parseInt(car.mileage) : undefined,
+                nickname: car.nickname,
+                last_oil_change: car.last_oil_change ? car.last_oil_change.split('T')[0] : undefined,
+                purchase_date: car.purchase_date ? car.purchase_date.split('T')[0] : undefined
+            };
+            
+            console.log('Formatted API request body:', JSON.stringify(apiBody, null, 2));
+            
+            // Add timeout to fetch request for better UX
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
+            const response = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(apiBody),
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            // Log response for debugging
+            console.log('API Response status:', response.status);
+            
+            if (response.ok) {
+                const responseData = await response.json();
+                console.log('API Response data:', JSON.stringify(responseData, null, 2));
+                return true;
+            } else {
+                const errorText = await response.text();
+                console.error('API Error response:', errorText);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error updating car in backend:', error);
+            return false;
         }
     };
 
@@ -251,7 +394,7 @@ export const AddCar = () => {
                 </TouchableOpacity>
                 
                 <View style={styles.titleContainer}>
-                    <Text style={styles.logo}>🚗 Add Car</Text>
+                    <Text style={styles.logo}>{headerTitle}</Text>
                 </View>
                 
                 <TouchableOpacity 
@@ -260,10 +403,10 @@ export const AddCar = () => {
                         (loading || !make || !model || !year) && styles.disabledButton
                     ]} 
                     disabled={loading || !make || !model || !year}
-                    onPress={saveToDB}
+                    onPress={handleSubmit}
                 >
                     <Text style={styles.saveText}>
-                        {loading ? 'Saving...' : 'Save'}
+                        {loading ? 'Saving...' : saveButtonText}
                     </Text>
                     {loading && 
                         <ActivityIndicator color="#fff" size="small" style={{ marginLeft: 8 }}/>
@@ -281,7 +424,7 @@ export const AddCar = () => {
                     keyboardShouldPersistTaps="handled"
                 >
                     {/* Form Title */}
-                    <Text style={styles.pageTitle}>Vehicle Information</Text>
+                    <Text style={styles.pageTitle}>{pageTitle}</Text>
                     
                     {/* Basic Information Section */}
                     <View style={styles.section}>
