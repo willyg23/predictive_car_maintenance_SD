@@ -64,22 +64,17 @@ export const AddCar = () => {
       
     }, [make]);
     
-    // User creation/retrieval
+    // User UUID - hardcoded instead of creating fake users
     const getOrCreateUserUUID = async (): Promise<string> => {
+        const HARDCODED_UUID = 'e84de32d-0015-46a9-a779-efb42ef98fc7';
+        
+        // Store the hardcoded UUID in AsyncStorage if not already there
         let user_uuid = await AsyncStorage.getItem('user_uuid');
         if (!user_uuid) {
-            const response = await fetch('https://ii1orwzkzl.execute-api.us-east-2.amazonaws.com/dev/create_fake_user', {
-                method: 'POST',
-            });
-            const data = await response.json();
-            user_uuid = data.user_uuid;
-            if (user_uuid) {
-                await AsyncStorage.setItem('user_uuid', user_uuid);
-            } else {
-                throw new Error('Failed to create or retrieve user_uuid');
-            }
+            await AsyncStorage.setItem('user_uuid', HARDCODED_UUID);
+            user_uuid = HARDCODED_UUID;
         }
-        if (!user_uuid) throw new Error('Failed to create or retrieve user_uuid');
+        
         return user_uuid;
     };
 
