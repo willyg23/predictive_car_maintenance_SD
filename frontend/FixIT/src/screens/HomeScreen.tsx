@@ -1,3 +1,4 @@
+import React from 'react';
 import { StyleSheet, View, Text, Pressable, Animated, ScrollView } from "react-native";
 import LinearGradient from "react-native-linear-gradient";
 import { useState, useRef, useEffect } from 'react';
@@ -6,18 +7,57 @@ import FeatureGrid from "../components/FeatureGrid";
 import NavigationBar from "../components/NavigationBar";
 import VehicleSection from "../components/VehicleSection";
 import SetupBanner from "../components/SetupBanner";
-import { useNavigation } from '@react-navigation/native';
+import CarCarousel from "../components/CarCarousel";
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useBLEContext, ParsedOBDData } from "../../scripts/BLEContext";
 import { RootStackParamList } from "../App";
 
+type HomeScreenRouteProp = RouteProp<RootStackParamList, 'HomeScreen'>;
+
 const HomeScreen = () => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const route = useRoute<HomeScreenRouteProp>();
     const [activeTab, setActiveTab] = useState('stats');
     const pulseAnim = useRef(new Animated.Value(1)).current;
+    // Add a ref to track if we've already cleaned up navigation params
+    const alreadyCleanedUp = useRef(false);
     
     // Use BLE context instead of hardcoded data
     const { parsedData, connectedDevice } = useBLEContext();
+    
+    // Set activeTab from navigation params and handle focusCarId
+    useEffect(() => {
+        // Only run when we have specific params to process, using specific keys to avoid over-rendering
+        if (route.params?.activeTab || route.params?.focusCarId) {
+            const { activeTab: tabParam, focusCarId: carParam } = route.params;
+            
+            console.log(`HomeScreen processing params: activeTab=${tabParam}, focusCarId=${carParam}`);
+            
+            // If we have a focusCarId, always switch to cars tab
+            if (carParam) {
+                setActiveTab('cars');
+            } else if (tabParam) {
+                setActiveTab(tabParam);
+            }
+            
+            // Clear params once - use the ref defined at component level
+            if (!alreadyCleanedUp.current) {
+                const timeoutId = setTimeout(() => {
+                    console.log('Cleaning up navigation params');
+                    navigation.setParams({ 
+                        activeTab: undefined,
+                        focusCarId: undefined
+                    });
+                    alreadyCleanedUp.current = true;
+                }, 2000);
+                
+                return () => {
+                    clearTimeout(timeoutId);
+                };
+            }
+        }
+    }, [route.params?.activeTab, route.params?.focusCarId, navigation]);
     
     // Fallback data if no BLE data is available
     const [localData, setLocalData] = useState<ParsedOBDData>({
@@ -79,6 +119,12 @@ const HomeScreen = () => {
                         <Text style={[styles.modeText, activeTab === 'stats' && styles.activeText]}>Stats</Text>
                     </Pressable>
                     <Pressable 
+                        style={[styles.modeTab, activeTab === 'cars' && styles.activeTab]}
+                        onPress={() => setActiveTab('cars')}
+                    >
+                        <Text style={[styles.modeText, activeTab === 'cars' && styles.activeText]}>Cars</Text>
+                    </Pressable>
+                    <Pressable 
                         style={[styles.modeTab, activeTab === 'setup' && styles.activeTab]}
                         onPress={() => setActiveTab('setup')}
                     >
@@ -118,104 +164,111 @@ const HomeScreen = () => {
                     </View>
                 )}
 
-                {/* Quick Stats with Interaction */}
-                {activeTab === 'stats' && (
-                    <View style={styles.statsContainer}>
-                        <Pressable 
-                            style={styles.statCard}
-                            onPress={startPulse}
-                        >
-                            <Animated.View style={[styles.statContent, { transform: [{ scale: pulseAnim }] }]}>
-                                <View style={styles.statHeader}>
-                                    <Text style={styles.statEmoji}>🌡️</Text>
-                                </View>
-                                <Text style={styles.statValue}>{tempF}°F</Text>
-                                <Text style={styles.statLabel}>Engine Temp</Text>
-                                <View style={[
-                                    styles.statIndicator, 
-                                    tempStatus.isWarning && styles.warningIndicator
-                                ]}>
-                                    <View style={[
-                                        styles.indicatorDot, 
-                                        tempStatus.isWarning && styles.warningDot
-                                    ]} />
-                                    <Text style={[
-                                        styles.statStatus, 
-                                        tempStatus.isWarning && styles.warningText
-                                    ]}>
-                                        {tempStatus.status}
-                                    </Text>
-                                </View>
-                            </Animated.View>
-                        </Pressable>
-
-                        <Pressable 
-                            style={[
-                                styles.statCard, 
-                                activeData.check_engine_light && styles.warningCard
-                            ]}
-                        >
-                            <View style={styles.statContent}>
-                                <View style={styles.statHeader}>
-                                    <Text style={styles.statEmoji}>🔧</Text>
-                                </View>
-                                <Text style={styles.statValue}>
-                                    {activeData.dtcs.length > 0 ? activeData.dtcs[0] : "None"}
-                                </Text>
-                                <Text style={styles.statLabel}>Engine Code</Text>
-                                <View style={[
-                                    styles.statIndicator, 
-                                    activeData.check_engine_light && styles.warningIndicator
-                                ]}>
-                                    <View style={[
-                                        styles.indicatorDot, 
-                                        activeData.check_engine_light && styles.warningDot
-                                    ]} />
-                                    <Text style={[
-                                        styles.statStatus, 
-                                        activeData.check_engine_light && styles.warningText
-                                    ]}>
-                                        {activeData.check_engine_light ? 'Check Engine' : 'All Good'}
-                                    </Text>
-                                </View>
-                            </View>
-                        </Pressable>
-                    </View>
+                {/* Cars Tab */}
+                {activeTab === 'cars' && (
+                    <CarCarousel focusCarId={route.params?.focusCarId} />
                 )}
 
-                {/* Quick Actions with Categories */}
-                <View style={styles.quickActions}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Quick Actions</Text>
-                        <Text style={styles.sectionBadge}>New</Text>
-                    </View>
-                    <FeatureGrid />
-                </View>
+                {/* Quick Stats with Interaction */}
+                {activeTab === 'stats' && (
+                    <>
+                        <View style={styles.statsContainer}>
+                            <Pressable 
+                                style={styles.statCard}
+                                onPress={startPulse}
+                            >
+                                <Animated.View style={[styles.statContent, { transform: [{ scale: pulseAnim }] }]}>
+                                    <View style={styles.statHeader}>
+                                        <Text style={styles.statEmoji}>🌡️</Text>
+                                    </View>
+                                    <Text style={styles.statValue}>{tempF}°F</Text>
+                                    <Text style={styles.statLabel}>Engine Temp</Text>
+                                    <View style={[
+                                        styles.statIndicator, 
+                                        tempStatus.isWarning && styles.warningIndicator
+                                    ]}>
+                                        <View style={[
+                                            styles.indicatorDot, 
+                                            tempStatus.isWarning && styles.warningDot
+                                        ]} />
+                                        <Text style={[
+                                            styles.statStatus, 
+                                            tempStatus.isWarning && styles.warningText
+                                        ]}>
+                                            {tempStatus.status}
+                                        </Text>
+                                    </View>
+                                </Animated.View>
+                            </Pressable>
 
-                <SetupBanner />
-                <VehicleSection />
-
-                {/* Activity Feed */}
-                <View style={styles.recentActivity}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Activity</Text>
-                        <Text style={styles.viewAllText}>View All</Text>
-                    </View>
-                    <Pressable style={styles.activityCardStyle}>
-                        <View style={styles.activityHeaderStyle}>
-                            <Text style={styles.activityEmojiStyle}>🔍</Text>
-                            <View style={styles.activityInfoStyle}>
-                                <Text style={styles.activityTitleStyle}>Diagnostic Scan</Text>
-                                <Text style={styles.activityTimeStyle}>2h ago</Text>
-                            </View>
-                            <View style={styles.activityBadgeStyle}>
-                                <Text style={styles.badgeTextStyle}>
-                                    {activeData.check_engine_light ? 'Issues Found' : 'All Good'}
-                                </Text>
-                            </View>
+                            <Pressable 
+                                style={[
+                                    styles.statCard, 
+                                    activeData.check_engine_light && styles.warningCard
+                                ]}
+                            >
+                                <View style={styles.statContent}>
+                                    <View style={styles.statHeader}>
+                                        <Text style={styles.statEmoji}>🔧</Text>
+                                    </View>
+                                    <Text style={styles.statValue}>
+                                        {activeData.dtcs.length > 0 ? activeData.dtcs[0] : "None"}
+                                    </Text>
+                                    <Text style={styles.statLabel}>Engine Code</Text>
+                                    <View style={[
+                                        styles.statIndicator, 
+                                        activeData.check_engine_light && styles.warningIndicator
+                                    ]}>
+                                        <View style={[
+                                            styles.indicatorDot, 
+                                            activeData.check_engine_light && styles.warningDot
+                                        ]} />
+                                        <Text style={[
+                                            styles.statStatus, 
+                                            activeData.check_engine_light && styles.warningText
+                                        ]}>
+                                            {activeData.check_engine_light ? 'Check Engine' : 'All Good'}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </Pressable>
                         </View>
-                    </Pressable>
-                </View>
+
+                        {/* Service History and Maintenance Actions */}
+                        <View style={styles.quickActions}>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>Quick Actions</Text>
+                                <Text style={styles.sectionBadge}>New</Text>
+                            </View>
+                            <FeatureGrid />
+                        </View>
+
+                        <SetupBanner />
+                        <VehicleSection />
+
+                        {/* Activity Feed */}
+                        <View style={styles.recentActivity}>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>Activity</Text>
+                                <Text style={styles.viewAllText}>View All</Text>
+                            </View>
+                            <Pressable style={styles.activityCardStyle}>
+                                <View style={styles.activityHeaderStyle}>
+                                    <Text style={styles.activityEmojiStyle}>🔍</Text>
+                                    <View style={styles.activityInfoStyle}>
+                                        <Text style={styles.activityTitleStyle}>Diagnostic Scan</Text>
+                                        <Text style={styles.activityTimeStyle}>2h ago</Text>
+                                    </View>
+                                    <View style={styles.activityBadgeStyle}>
+                                        <Text style={styles.badgeTextStyle}>
+                                            {activeData.check_engine_light ? 'Issues Found' : 'All Good'}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </Pressable>
+                        </View>
+                    </>
+                )}
             </ScrollView>
             {/* Pass the active data to NavigationBar */}
             <NavigationBar fixedJsonObject={activeData} />
@@ -392,7 +445,6 @@ const styles = StyleSheet.create({
     recentActivity: {
         gap: 12,
     },
-    // Fixed missing style definitions
     viewAllText: {
         color: '#808080',
         fontSize: 14,

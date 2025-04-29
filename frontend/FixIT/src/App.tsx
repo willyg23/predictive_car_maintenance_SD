@@ -31,12 +31,12 @@ import { BLEProvider } from '../scripts/BLEContext';
 export type RootStackParamList = {
   GettingStarted: undefined;
   CarData: undefined;
-  HomeScreen: undefined;
+  HomeScreen: { activeTab?: string; focusCarId?: string | null } | undefined;
   Maintenance: undefined;
   Premium: undefined;
   Login: undefined;
   SignIn: undefined;
-  AddCar: undefined;
+  AddCar: { editMode?: boolean; carData?: any } | undefined;
   TapToScan: undefined;
 };
 

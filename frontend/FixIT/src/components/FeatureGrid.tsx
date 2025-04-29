@@ -1,4 +1,5 @@
-import { useNavigation, useRoute } from "@react-navigation/native";
+import React from 'react';
+import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { RootStackParamList } from "../App";
@@ -6,31 +7,46 @@ import { RootStackParamList } from "../App";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const FeatureGrid = () => {
-        const navigation = useNavigation<NavigationProp>();
-        const route = useRoute();
+    const navigation = useNavigation<NavigationProp>();
+
     return (
         <View style={styles.featureGrid}>
             <View style={styles.featureRow}>
                 <FeatureButton 
                     emoji="📋"
                     text="Service History"
+                    onPress={() => console.log('Service History pressed')}
                 />
                 <FeatureButton 
-                    emoji="🔍"
-                    text="Quick Scan"
+                    emoji="🔧"
+                    text="Diagnostics"
+                    onPress={() => navigation.navigate('TapToScan')}
                 />
             </View>
-            <Pressable onPress={() => navigation.navigate('AddCar')} style={styles.featureButton}>
-                <Text style={styles.featureEmoji}>➕</Text>
-                <Text style={styles.featureText}>Add Car</Text>
-            </Pressable>
-           
+            <View style={styles.featureRow}>
+                <FeatureButton 
+                    emoji="📊"
+                    text="Maintenance"
+                    onPress={() => navigation.navigate('Maintenance')}
+                />
+                <FeatureButton 
+                    emoji="➕"
+                    text="Add Car"
+                    onPress={() => navigation.navigate('AddCar')}
+                />
+            </View>
         </View>
     );
 };
 
-const FeatureButton = ({ emoji, text }: { emoji?: string, text?: string }) => (
-    <Pressable style={styles.featureButton}>
+type FeatureButtonProps = {
+    emoji?: string;
+    text?: string;
+    onPress?: () => void;
+};
+
+const FeatureButton = ({ emoji, text, onPress }: FeatureButtonProps) => (
+    <Pressable style={styles.featureButton} onPress={onPress}>
         {emoji && <Text style={styles.featureEmoji}>{emoji}</Text>}
         <Text style={styles.featureText}>{text}</Text>
     </Pressable>
