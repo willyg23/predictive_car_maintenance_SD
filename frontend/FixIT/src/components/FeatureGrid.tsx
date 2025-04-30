@@ -15,7 +15,7 @@ const FeatureGrid = () => {
                 <FeatureButton 
                     emoji="📋"
                     text="Service History"
-                    onPress={() => console.log('Service History pressed')}
+                    onPress={() => navigation.navigate('ServiceHistory')}
                 />
                 <FeatureButton 
                     emoji="🔧"
