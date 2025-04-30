@@ -36,6 +36,8 @@ interface Car {
     mileage?: string;
     last_oil_change?: string | null;
     purchase_date?: string | null;
+    last_brake_pad_change?: string | null;
+    last_maintenance_checkup?: string | null;
 }
 
 export const AddCar = () => {
@@ -67,6 +69,21 @@ export const AddCar = () => {
             : null
     );
     const [showPurchaseDatePicker, setShowPurchaseDatePicker] = useState(false);
+    
+    // Additional maintenance fields
+    const [lastBrakePadChange, setLastBrakePadChange] = useState<Date | null>(
+        isEditMode && carToEdit?.last_brake_pad_change 
+            ? new Date(carToEdit.last_brake_pad_change) 
+            : null
+    );
+    const [showLastBrakePadChangePicker, setShowLastBrakePadChangePicker] = useState(false);
+    
+    const [lastMaintenanceCheckup, setLastMaintenanceCheckup] = useState<Date | null>(
+        isEditMode && carToEdit?.last_maintenance_checkup 
+            ? new Date(carToEdit.last_maintenance_checkup) 
+            : null
+    );
+    const [showLastMaintenanceCheckupPicker, setShowLastMaintenanceCheckupPicker] = useState(false);
     
     // Dropdown states
     const [openMake, setOpenMake] = useState(false);
@@ -132,6 +149,8 @@ export const AddCar = () => {
         setMileage('');
         setLastOilChange(null);
         setPurchaseDate(null);
+        setLastBrakePadChange(null);
+        setLastMaintenanceCheckup(null);
     };
 
     // Update the title based on mode
@@ -168,6 +187,8 @@ export const AddCar = () => {
                 mileage: mileage || '0',
                 last_oil_change: lastOilChange ? lastOilChange.toISOString() : null,
                 purchase_date: purchaseDate ? purchaseDate.toISOString() : null,
+                last_brake_pad_change: lastBrakePadChange ? lastBrakePadChange.toISOString() : null,
+                last_maintenance_checkup: lastMaintenanceCheckup ? lastMaintenanceCheckup.toISOString() : null,
             };
 
             // Track which car was edited if in edit mode
@@ -253,7 +274,9 @@ export const AddCar = () => {
                 nickname: car.nickname,
                 // Only send nickname, not car_nickname to avoid confusion
                 last_oil_change: car.last_oil_change ? car.last_oil_change.split('T')[0] : undefined,
-                purchase_date: car.purchase_date ? car.purchase_date.split('T')[0] : undefined
+                purchase_date: car.purchase_date ? car.purchase_date.split('T')[0] : undefined,
+                last_brake_pad_change: car.last_brake_pad_change ? car.last_brake_pad_change.split('T')[0] : undefined,
+                last_maintenance_checkup: car.last_maintenance_checkup ? car.last_maintenance_checkup.split('T')[0] : undefined
             };
             
             console.log('API request body:', JSON.stringify(apiBody, null, 2));
@@ -331,7 +354,9 @@ export const AddCar = () => {
                 mileage: car.mileage ? parseInt(car.mileage) : undefined,
                 nickname: car.nickname,
                 last_oil_change: car.last_oil_change ? car.last_oil_change.split('T')[0] : undefined,
-                purchase_date: car.purchase_date ? car.purchase_date.split('T')[0] : undefined
+                purchase_date: car.purchase_date ? car.purchase_date.split('T')[0] : undefined,
+                last_brake_pad_change: car.last_brake_pad_change ? car.last_brake_pad_change.split('T')[0] : undefined,
+                last_maintenance_checkup: car.last_maintenance_checkup ? car.last_maintenance_checkup.split('T')[0] : undefined
             };
             
             console.log('Formatted API request body:', JSON.stringify(apiBody, null, 2));
@@ -379,6 +404,16 @@ export const AddCar = () => {
     const onPurchaseDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
       setShowPurchaseDatePicker(Platform.OS === 'ios');
       if (selectedDate) setPurchaseDate(selectedDate);
+    };
+
+    const onLastBrakePadChangeChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+      setShowLastBrakePadChangePicker(Platform.OS === 'ios');
+      if (selectedDate) setLastBrakePadChange(selectedDate);
+    };
+    
+    const onLastMaintenanceCheckupChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+      setShowLastMaintenanceCheckupPicker(Platform.OS === 'ios');
+      if (selectedDate) setLastMaintenanceCheckup(selectedDate);
     };
 
     return (
@@ -583,6 +618,50 @@ export const AddCar = () => {
                                     mode="date"
                                     display="default"
                                     onChange={onLastOilChangeChange}
+                                    maximumDate={new Date()}
+                                />
+                            )}
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Last Brake Pad Change</Text>
+                            <TouchableOpacity
+                                style={styles.dateInput}
+                                onPress={() => setShowLastBrakePadChangePicker(true)}
+                                disabled={loading}
+                            >
+                                <Text style={styles.dateText}>
+                                    {lastBrakePadChange ? lastBrakePadChange.toLocaleDateString() : 'Select date'}
+                                </Text>
+                            </TouchableOpacity>
+                            {showLastBrakePadChangePicker && (
+                                <DateTimePicker
+                                    value={lastBrakePadChange || new Date()}
+                                    mode="date"
+                                    display="default"
+                                    onChange={onLastBrakePadChangeChange}
+                                    maximumDate={new Date()}
+                                />
+                            )}
+                        </View>
+
+                        <View style={styles.formGroup}>
+                            <Text style={styles.label}>Last Maintenance Checkup</Text>
+                            <TouchableOpacity
+                                style={styles.dateInput}
+                                onPress={() => setShowLastMaintenanceCheckupPicker(true)}
+                                disabled={loading}
+                            >
+                                <Text style={styles.dateText}>
+                                    {lastMaintenanceCheckup ? lastMaintenanceCheckup.toLocaleDateString() : 'Select date'}
+                                </Text>
+                            </TouchableOpacity>
+                            {showLastMaintenanceCheckupPicker && (
+                                <DateTimePicker
+                                    value={lastMaintenanceCheckup || new Date()}
+                                    mode="date"
+                                    display="default"
+                                    onChange={onLastMaintenanceCheckupChange}
                                     maximumDate={new Date()}
                                 />
                             )}

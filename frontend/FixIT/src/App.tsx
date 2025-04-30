@@ -24,6 +24,7 @@ import CarData from './screens/CarData';
 import HomeScreen from './screens/HomeScreen';
 import MaintenanceScreen from './screens/MaintenanceScreen';
 import PremiumScreen from './screens/PremiumScreen';
+import ServiceHistoryScreen from './screens/ServiceHistoryScreen';
 import { TapToScan } from './screens/TapToScan';
 import { AddCar } from './screens/AddCar';
 import { BLEProvider } from '../scripts/BLEContext';
@@ -38,6 +39,7 @@ export type RootStackParamList = {
   SignIn: undefined;
   AddCar: { editMode?: boolean; carData?: any } | undefined;
   TapToScan: undefined;
+  ServiceHistory: { carId?: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -55,6 +57,7 @@ function App(): React.JSX.Element {
             <Stack.Screen name='HomeScreen' component={HomeScreen} options={{headerShown:false}}/>
             <Stack.Screen name='Maintenance' component={MaintenanceScreen} options={{headerShown:false}}/>
             <Stack.Screen name='Premium' component={PremiumScreen} options={{headerShown:false}}/>
+            <Stack.Screen name='ServiceHistory' component={ServiceHistoryScreen} options={{headerShown:false}}/>
             <Stack.Screen name='AddCar' component={AddCar} options={{headerShown:false}}/>
             <Stack.Screen name='TapToScan' component={TapToScan} options={{headerShown:false}}/>
             

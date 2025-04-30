@@ -567,6 +567,11 @@ const CarCarousel = ({ focusCarId }: CarCarouselProps) => {
       console.log(`Selected car: ${item.nickname}`);
     };
 
+    // Add a function to navigate to the service history screen
+    const viewServiceHistory = () => {
+      navigation.navigate('ServiceHistory', { carId: item.id });
+    };
+
     return (
       <View style={[styles.carCardContainer, { width: windowWidth - 48 }]}>
         <Pressable 
@@ -644,6 +649,15 @@ const CarCarousel = ({ focusCarId }: CarCarouselProps) => {
           
           {/* Action Buttons */}
           <View style={styles.cardActions}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={viewServiceHistory}
+              disabled={deletingCarId !== null}
+            >
+              <Text style={styles.actionButtonIcon}>📋</Text>
+              <Text style={styles.actionButtonText}>History</Text>
+            </TouchableOpacity>
+            
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => handleEditCar(item)}
