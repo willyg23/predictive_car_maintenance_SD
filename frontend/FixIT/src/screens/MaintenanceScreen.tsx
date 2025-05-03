@@ -1,333 +1,384 @@
-import { StyleSheet, View, Text, ScrollView,TextInput, TouchableOpacity } from "react-native";
-import Header from "../components/Header";
-import NavigationBar from "../components/NavigationBar";
-import { useEffect, useState } from "react";
-import { generateResponse } from "../../scripts/generateResponse";
-import OpenAI from "openai";
+import React, { useEffect, useState, useCallback } from "react";
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  ScrollView, 
+  ActivityIndicator, 
+  TouchableOpacity, 
+  StatusBar
+} from "react-native";
 import { useRoute, RouteProp } from '@react-navigation/native';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Add interface for the route params type
-interface MaintenanceScreenParams {
-  fixedJsonObject?: {
-    dtcs: string[];
-    coolant_temp_c: string | number;
-    check_engine_light: string | boolean;
-  };
-}
+// Components
+import Header from "../components/Header";
+import NavigationBar from "../components/NavigationBar";
+import CategorySection from "../components/CategorySection";
+import CarStatusCard from "../components/CarStatusCard";
+import ChatSection from "../components/ChatSection";
 
-// Define the type for our state
-interface FixedJsonState {
-  dtcs: string[];
-  coolant_temp_c: string | number;
-  check_engine_light: string | boolean;
-}
+// Services & Types
+import { generateInsights } from "../services/OpenAIService";
+import { CarInfo, VehicleData, ScreenParams, DiagnosticSection, SectionData } from "../types/carTypes";
 
 const MaintenanceScreen = () => {
-    const route = useRoute<RouteProp<Record<string, MaintenanceScreenParams>, string>>();
-    const [messages, setMessages] = useState<Array<{ text: string; reply: string | null }>>([]);
-    const [inputText, setInputText] = useState(""); // State to store user input
-    
-    const [fixedJsonObject, setFixedJsonObject] = useState<FixedJsonState>({
-      dtcs: [],
-      coolant_temp_c: "",
-      check_engine_light: "",
-    });
-
-    const [isLoading, setIsLoading] = useState(true);
-    const CACHE_KEY = '@FixIT_conversation';
-
-
-    const handleSendMessage = async () => {
-      if (inputText.trim() !== "") {
-        // Add user's message to the list
-        setMessages((prevMessages) => [...prevMessages, { text: inputText, reply: null }]);
-    
-        try {
-          // Get AI response
-          const aiReply = await getPerplexityResponse(inputText);
-    
-          // Append AI response to messages state
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            { text: inputText, reply: aiReply },
-          ]);
-        } catch (error) {
-          console.error("Error generating response:", error);
-        }
-    
-        // Clear the input field
-        setInputText("");
-      }
-    };
-
-    const model = "accord"
-    const make = "honda"
-
-
-    const prePrompt = `
-      I am driving a ${make} ${model}. My car's onboard diagnostics system has detected the following issues:
-      - Diagnostic Trouble Codes (DTCs): ${fixedJsonObject.dtcs.join(", ")}
-      - Coolant temperature: ${fixedJsonObject.coolant_temp_c}°C
-      - Check engine light status: ${fixedJsonObject.check_engine_light ? "On" : "Off"}
-      
-      Please explain:
-      1. What the DTC codes (${fixedJsonObject.dtcs.join(", ")}) mean.
-      2. What might happen to my car if I do not address these issues.
-      3. Provide recommendations on how to fix these problems.
-    `;
- 
-    // const response = await generateResponse(prePrompt);
-    
-    const client = new OpenAI({ apiKey: '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',baseURL:"https://api.perplexity.ai" }); // Pass your API key here
-
-    const getPerplexityResponse = async (inputText: string) => {
-      const API_URL = 'https://api.perplexity.ai/chat/completions';
-      const PERPLEXITY_API_KEY = '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'
-
-      const combinedPrompt = `
-        I am driving a ${make} ${model}. My car's onboard diagnostics system has detected the following issues:
-        - Diagnostic Trouble Codes (DTCs): ${fixedJsonObject.dtcs.join(", ")}
-        - Coolant temperature: ${fixedJsonObject.coolant_temp_c}°C
-        - Check engine light status: ${fixedJsonObject.check_engine_light ? "On" : "Off"}
-    
-
-        Answere this question: ${inputText}
-      `;
-
-
-
-
-      try {
-        const response = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${PERPLEXITY_API_KEY}`
-          },
-          body: JSON.stringify({
-            model: "sonar-pro",
-            messages: [
-              {
-                role: "user",
-                content: combinedPrompt
-              }
-            ]
-          })
-        });
-    
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-    
-        const data = await response.json();
-        
-        
-        setMessages((prevMessages) => [
-          ...prevMessages.slice(0, prevMessages.length - 1), 
-          { text: inputText, reply: data.choices[0].message.content }, 
-          
-        ]);
-        return data.choices[0].message.content;
-      } catch (error) {
-        console.error('Error:', error);
-        throw error;
-      }
-    };
-
+  const route = useRoute<RouteProp<Record<string, ScreenParams>, string>>();
   
+  // State
+  const [isLoading, setIsLoading] = useState(true);
+  const [car, setCar] = useState<CarInfo | null>(null);
+  const [vehicleData, setVehicleData] = useState<VehicleData>({
+    dtcs: [],
+    coolant_temp_c: 0,
+    check_engine_light: false,
+  });
+  
+  // Diagnostic sections
+  const [sections, setSections] = useState<SectionData[]>([
+    {
+      id: 'overview',
+      title: 'Overview',
+      icon: 'ℹ️',
+      color: '#5856D6',
+      content: '',
+      isLoading: false,
+      isExpanded: true
+    },
+    {
+      id: 'maintenance',
+      title: 'Maintenance',
+      icon: '📅',
+      color: '#4CD964',
+      content: '',
+      isLoading: false,
+      isExpanded: false
+    },
+    {
+      id: 'repairs',
+      title: 'Repairs',
+      icon: '🛠️',
+      color: '#FF3B30',
+      content: '',
+      isLoading: false,
+      isExpanded: false
+    },
+    {
+      id: 'costs',
+      title: 'Cost Estimates',
+      icon: '💰',
+      color: '#5AC8FA',
+      content: '',
+      isLoading: false,
+      isExpanded: false
+    }
+  ]);
 
-     
-    const setCodes = (str:string) => {
-      try {
-        // Get data from route params, with proper null checking
-        const routeData = route.params?.fixedJsonObject || null;
-        console.log("here is the fixedJSONObject " + JSON.stringify(routeData));
-        
-        // Ensure we have valid data before updating state
-        if (routeData && typeof routeData === 'object') {
-          // Validate that the required properties exist
-          const safeData: FixedJsonState = {
-            dtcs: Array.isArray(routeData.dtcs) ? routeData.dtcs : [],
-            coolant_temp_c: routeData.coolant_temp_c ?? "",
-            check_engine_light: routeData.check_engine_light ?? "",
-          };
-          setFixedJsonObject(safeData);
-        } else {
-          console.log("No valid fixedJsonObject in route params");
-        }
-      } catch (error) {
-        console.error("Error processing route params:", error);
+  // Initialize data
+  useEffect(() => {
+    loadData();
+  }, []);
+  
+  const loadData = async () => {
+    try {
+      // Load vehicle data from params
+      if (route.params?.fixedJsonObject) {
+        setVehicleData({
+          dtcs: Array.isArray(route.params.fixedJsonObject.dtcs) ? route.params.fixedJsonObject.dtcs : [],
+          coolant_temp_c: route.params.fixedJsonObject.coolant_temp_c ?? 0,
+          check_engine_light: route.params.fixedJsonObject.check_engine_light ?? false,
+        });
       }
-    } 
-
-    useEffect(() => {
-
-      const loadConversation = async () => {
-        try {
-          // Try to load cached conversation
-          const cachedData = await AsyncStorage.getItem(CACHE_KEY);
-          
-          if (cachedData) {
-            console.log("there is cache data")
-            setMessages(JSON.parse(cachedData));
-          } else {
-            // If no cache exists and we have diagnostic data
-            console.log("there is no cache data")
-            if (fixedJsonObject.dtcs.length > 0) {
-              console.log("there is no cache data 2 ")
-              // Generate initial AI response
-              const aiReply = await getPerplexityResponse(prePrompt);
-              
-              // Create initial conversation entry
-              const initialMessage = { 
-                text: "Vehicle Diagnostic Report", 
-                reply: aiReply 
-              };
-              
-              setMessages([initialMessage]);
-              await AsyncStorage.setItem(CACHE_KEY, JSON.stringify([initialMessage]));
-            }
-          }
-        } catch (error) {
-          console.error('Error loading conversation:', error);
-        } finally {
-          setIsLoading(false);
+      
+      // Load car data from storage
+      const carId = await AsyncStorage.getItem('last_selected_car_id');
+      if (carId) {
+        const cars = await AsyncStorage.getItem('user_cars');
+        if (cars) {
+          const parsedCars = JSON.parse(cars);
+          const selectedCar = parsedCars.find((c: CarInfo) => c.id === carId);
+          if (selectedCar) setCar(selectedCar);
         }
-      };
-
-      loadConversation();
-      // getPerplexityResponse();
-      setCodes("")
-      console.log("hey")
-    }, [])
-
-
-    // Add this useEffect to save conversation on changes
-    useEffect(() => {
-      const saveConversation = async () => {
-        if (!isLoading) {  // Don't save during initial load
+      }
+      
+      // Generate diagnostic content
+      await generateDiagnosticData();
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setIsLoading(false);
+    }
+  };
+  
+  // Toggle section expansion
+  const toggleSection = (id: DiagnosticSection) => {
+    setSections(prev => prev.map(section => 
+      section.id === id 
+        ? { ...section, isExpanded: !section.isExpanded } 
+        : section
+    ));
+  };
+  
+  // Check if maintenance is due based only on last oil change date (not mileage)
+  const isMaintenanceDue = (car: CarInfo | null): boolean => {
+    if (!car || !car.last_oil_change) return false;
+    
+    // Only check date-based maintenance
+    if (car.last_oil_change.includes('-') || car.last_oil_change.includes('/')) {
+      try {
+        const lastDate = new Date(car.last_oil_change);
+        const now = new Date();
+        const nextDate = new Date(car.last_oil_change);
+        nextDate.setMonth(nextDate.getMonth() + 3); // Assuming 3 months interval
+        
+        return nextDate < now; // Return true if maintenance is due
+      } catch (error) {
+        console.error('Error parsing maintenance date:', error);
+      }
+    }
+    
+    return false;
+  };
+  
+  // Generate diagnostic data using OpenAI API
+  const generateDiagnosticData = useCallback(async (forceRefresh = false) => {
+    // Set all sections to loading state
+    setSections(prev => prev.map(section => {
+      return { ...section, isLoading: true };
+    }));
+    
+    try {
+      // Process each section in parallel
+      const updatedSections = await Promise.all(
+        sections.map(async section => {
           try {
-            await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(messages));
-          } catch (error) {
-            console.error('Error saving conversation:', error);
-          }
-        }
-      };
-
-      saveConversation();
-    }, [messages]);
-
-
-
-    return (
-        <View style={styles.container}>
-            <Header />
-            <Text style={styles.title}>Maintenance</Text>
-            <Text style={styles.subtitle}>Track and schedule your vehicle maintenance</Text>
-            <ScrollView 
-                style={styles.scrollView}
-                contentContainerStyle={styles.content}
-                showsVerticalScrollIndicator={false}
-            >
-                {messages.map((message, index) => (
-                    <View key={index} style={styles.messageContainer}>
-                        
-                        <Text style={styles.replyMessage}>{message.text}</Text>
-                        
-                        <Text style={styles.userMessage}>{message.reply}</Text>
-                    </View>
-                ))}
-
-              
-            </ScrollView>
-
-            {/* Container fore the text input and the send button */}
-            <View style={styles.fieldInputAndSend}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Type here"
-                    placeholderTextColor="grey"
-                    value={inputText}
-                    onChangeText={(text) => setInputText(text)}
-                />
-                <TouchableOpacity style={styles.sendButton} onPress={handleSendMessage}>
-                    <Text >Send</Text>
-                </TouchableOpacity>
-            </View>
+            const cacheKey = `section_${section.id}_${JSON.stringify(vehicleData)}`;
             
-            <NavigationBar />
+            // Format vehicle data properly
+            const processedData = {
+              dtcs: Array.isArray(vehicleData.dtcs) ? vehicleData.dtcs : [],
+              coolant_temp_c: typeof vehicleData.coolant_temp_c === 'string' 
+                ? parseFloat(vehicleData.coolant_temp_c) 
+                : vehicleData.coolant_temp_c,
+              check_engine_light: Boolean(vehicleData.check_engine_light)
+            };
+            
+            // Create specific prompt based on section ID
+            let prompt = '';
+            switch(section.id) {
+              case 'overview':
+                prompt = `Provide a VERY BRIEF overview (max 2-3 sentences) summarizing the vehicle status based on the data. ${isMaintenanceDue(car) ? 'Importantly, this vehicle is due for maintenance based on the service date.' : ''} Keep it simple and high-level.`;
+                break;
+              case 'maintenance':
+                prompt = `Recommend specific maintenance actions based on the vehicle data. ${isMaintenanceDue(car) ? 'This vehicle is overdue for an oil change based on the service date.' : ''} List only 2-3 priority items if needed. Be concise.`;
+                break;
+              case 'repairs':
+                prompt = 'Identify any critical repairs needed based on DTCs and other data. Maximum 3 bullet points. If no repairs needed, state this briefly.';
+                break;
+              case 'costs':
+                prompt = `Provide rough cost estimates for any recommended repairs or maintenance. ${isMaintenanceDue(car) ? 'Include cost estimate for an oil change which is needed based on the service date.' : ''} Give ranges rather than specific numbers. Keep very brief.`;
+                break;
+              default:
+                prompt = `Based on the following vehicle data, provide a concise analysis for ${section.title}:`;
+            }
+            
+            // Pass forceRefresh to ignore cache if we're explicitly refreshing
+            // Also pass the car data if available, with proper type mapping
+            const content = await generateInsights(
+              prompt, 
+              processedData, 
+              cacheKey, 
+              forceRefresh,
+              car ? {
+                id: car.id,
+                nickname: car.nickname,
+                make: car.make,
+                model: car.model,
+                year: typeof car.year === 'number' ? car.year.toString() : car.year,
+                mileage: car.mileage,
+                last_oil_change: car.last_oil_change,
+              } : undefined
+            );
+            
+            return {
+              ...section,
+              content,
+              isLoading: false
+            };
+          } catch (error) {
+            console.error(`Error generating content for ${section.id}:`, error);
+            
+            // Fallback content if API fails
+            return {
+              ...section,
+              content: `Unable to generate ${section.title.toLowerCase()} information at this time.`,
+              isLoading: false
+            };
+          }
+        })
+      );
+      
+      setSections(updatedSections);
+    } catch (error) {
+      console.error('Error generating diagnostic data:', error);
+      
+      // Reset loading state on error
+      setSections(prev => prev.map(section => {
+        return { 
+          ...section, 
+          isLoading: false,
+          content: `Unable to generate ${section.title.toLowerCase()} information at this time.`
+        };
+      }));
+    }
+  }, [vehicleData, sections, car]);
+  
+  // Handle refresh button click
+  const handleRefresh = () => {
+    // Force refresh by skipping cache
+    generateDiagnosticData(true);
+  };
+  
+  // Get status color based on vehicle condition
+  const getVehicleStatus = () => {
+    if (vehicleData.check_engine_light) {
+      return { color: "#FF3B30", text: "Issues Detected" };
+    }
+    if (vehicleData.dtcs.length > 0) {
+      return { color: "#FFCC00", text: "Warning" };
+    }
+    if (isMaintenanceDue(car)) {
+      return { color: "#FFCC00", text: "Maintenance Due" };
+    }
+    return { color: "#4CD964", text: "All Systems Normal" };
+  };
+  
+  // Render refresh button
+  const renderRefreshButton = () => (
+    <TouchableOpacity 
+      style={styles.refreshButton}
+      onPress={handleRefresh}
+      activeOpacity={0.8}
+    >
+      <View style={styles.refreshGradient}>
+        <Text style={styles.refreshIcon}>↻</Text>
+        <Text style={styles.refreshText}>Refresh Analysis</Text>
+      </View>
+    </TouchableOpacity>
+  );
+  
+  // Loading screen
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+        <Header />
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#4CD964" />
+          <Text style={styles.loadingText}>Analyzing vehicle data...</Text>
         </View>
+        <NavigationBar fixedJsonObject={vehicleData} />
+      </View>
     );
+  }
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <Header />
+      
+      <View style={styles.mainContent}>
+        {/* Car Status Card */}
+        <CarStatusCard 
+          car={car} 
+          status={getVehicleStatus()} 
+          temperature={vehicleData.coolant_temp_c}
+        />
+        
+        {/* Refresh Button */}
+        {renderRefreshButton()}
+        
+        {/* Main Content */}
+        <ScrollView 
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Diagnostic Sections */}
+          {sections.map((section, index) => (
+            <CategorySection
+              key={section.id}
+              id={section.id}
+              title={section.title}
+              icon={section.icon}
+              color={section.color}
+              content={section.content}
+              isLoading={section.isLoading}
+              isExpanded={section.isExpanded}
+              onToggle={() => toggleSection(section.id as DiagnosticSection)}
+            />
+          ))}
+          
+          {/* Ask a Question */}
+          <ChatSection vehicleData={vehicleData} />
+        </ScrollView>
+      </View>
+      
+      <NavigationBar fixedJsonObject={vehicleData} />
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#000000',
-    },
-    scrollView: {
-        flex: 1,
-    },
-    content: {
-        padding: 16,
-        gap: 20,
-    },
-    title: {
-        color: '#FFFFFF',
-        fontSize: 32,
-        fontWeight: '700',
-    },
-    subtitle: {
-        color: '#808080',
-        fontSize: 16,
-    },
-    input: {
-        flex: 1, // Take up available space
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 12,
-        color: 'white',
-        marginRight: 8, // Add space between input and button
-    },
-      messageContainer: {
-        marginBottom: 12,
-      },
-      userMessage: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        backgroundColor: "#1E1E1E",
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 8,
-        alignSelf: "flex-start", // Align user messages to the left
-        marginBottom: 4,
-      },
-      replyMessage: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        backgroundColor: "#4CD964",
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 8,
-        alignSelf: "flex-end", // Align reply messages to the right
-      },
-      sendButton: {
-        backgroundColor: '#4CD964', // Green button color
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        borderRadius: 8,
-    },
-      fieldInputAndSend: {
-        flexDirection: 'row', // Align items horizontally
-        alignItems: 'center', // Center items vertically
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        backgroundColor: '#1E1E1E', // Background color for the input section
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  mainContent: {
+    flex: 1,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#FFFFFF',
+    marginTop: 16,
+    fontSize: 16,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  refreshButton: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  refreshGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: '#333333',
+  },
+  refreshIcon: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  refreshText: {
+    color: '#FFFFFF',
+    marginLeft: 8,
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });
 
 export default MaintenanceScreen; 

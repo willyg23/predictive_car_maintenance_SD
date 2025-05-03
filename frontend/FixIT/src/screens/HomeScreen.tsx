@@ -90,9 +90,14 @@ const HomeScreen = () => {
 
     // Helper function to determine temperature status
     const getTempStatus = (temp: number) => {
-        if (temp > 230) return { status: "Too Hot", isWarning: true };
-        if (temp < 170) return { status: "Too Cold", isWarning: true };
-        return { status: "Optimal", isWarning: false };
+        // Standard optimal engine temperature is between 195-220°F
+        const tempF = temp * 9/5 + 32; // Convert to Fahrenheit for evaluation
+        
+        if (tempF > 230) return { status: "Overheating", isWarning: true };
+        if (tempF < 170) return { status: "Too Cold", isWarning: true };
+        if (tempF >= 195 && tempF <= 220) return { status: "Optimal", isWarning: false };
+        // Slightly outside optimal range but still acceptable
+        return { status: "Acceptable", isWarning: true };
     };
 
     // Get the active data (BLE data or local fallback)
